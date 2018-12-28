@@ -1,16 +1,16 @@
-# Project:           ...
+# Project:           Container Orchestration Security and Kubernetes
 
-**Student**:         Firstname Lastname
+**Student**:         Patrick Deutschmann
 
-**Advisor**:         Firstname Lastname, ...
+**Advisor**:         Stefan More, (Peter Lipp)
 
-**Project goals**:   ...
+**Project goals**:   Understand security aspects of Container Orchestration (especially the Kubernetes project). Give recommendations to operators or developers. Open for own ideas & follow-up projects.
 
 **Project status**:  
 
-* Started: ... 
-* Completed: ...
-* Presentations and posters: ...
+* Started: (planned: SS19) 
+* Completed: (planned: Summerbreak '19)
+* Presentation: (planned: SS19)
 
 
 ## Documentation
@@ -34,3 +34,11 @@ After your project is finished and before the repository gets archived, make sur
 ## Status
 
 TODOs, known issues, future work, ...
+
+* [ ] update this README
+* [ ] project: setup infrastructure
+* [ ] project: start with small experiments
+* [ ] thesis: find template
+* [ ] thesis: draft outline
+* [ ] always keep your advisor in the loop
+* [ ] *your own TODOS*
