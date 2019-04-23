@@ -1,13 +1,19 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my-app
+  name: my-app-pod
 spec:
   containers:
     - image: docker.io/deutschmann/my-app
       name: my-app
       ports:
         - containerPort: 8000
+          name: http
+          protocol: TCP
+    - image: docker.io/tommyvn/kubectl-proxy
+      name: kubectl-proxy
+      ports:
+        - containerPort: 8001
           name: http
           protocol: TCP
   imagePullSecrets:

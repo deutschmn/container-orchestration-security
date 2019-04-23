@@ -10,5 +10,13 @@ spec:
         - containerPort: 8000
           name: http
           protocol: TCP
+      volumeMounts:
+        - name: secrets
+          mountPath: "/secrets"
+          readOnly: true
   imagePullSecrets:
     - name: regcred
+  volumes:
+    - name: secrets
+      secret:
+        secretName: my-secret
