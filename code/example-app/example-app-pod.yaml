@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-app
+spec:
+  containers:
+    - image: docker.io/deutschmann/example-app
+      name: example-app
+      ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+      env:
+        - name: FLASK_DEBUG
+          value: "1"
+        - name: LOCAL_CLUSTER
+          value: "0"
+  imagePullSecrets:
+    - name: regcred
