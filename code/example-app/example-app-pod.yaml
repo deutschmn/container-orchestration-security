@@ -15,5 +15,6 @@ spec:
           value: "1"
         - name: LOCAL_CLUSTER
           value: "0"
+  serviceAccountName: example-app-sa
   imagePullSecrets:
     - name: regcred

@@ -1,8 +1,10 @@
 from kubernetes import client, config
-
+from os import environ
 
 class K8S:
-    def __init__(self, runningLocally):
+    def __init__(self):
+        runningLocally = environ["LOCAL_CLUSTER"] == '1'
+
         if runningLocally:
             # use this for local kubectl config
             try:
@@ -16,9 +18,30 @@ class K8S:
             except config.ConfigException:
                 print("Couldn't load incluster config")
 
-    def list_pods(self):
+    def list_pods(self, namespace):
         v1 = client.CoreV1Api()
 
-        ret = v1.list_pod_for_all_namespaces(watch=False)
+        if namespace:
+            ret = v1.list_namespaced_pod(namespace, watch=False)
+        else:
+            ret = v1.list_pod_for_all_namespaces(watch=False)
 
         return ret.items
+
+
+    def list_replica_sets(self, namespace):
+        v1 = client.AppsV1Api()
+
+        if namespace:
+            ret = v1.list_namespaced_replica_set(namespace, watch=False)
+        else:
+            ret = v1.list_replica_set_for_all_namespaces(watch=False)
+
+        return ret.items
+
+    def scale_replica_set(self, name, namespace, replicas):
+        v1 = client.AppsV1Api()
+
+        body = {"spec": {"replicas": replicas}}
+
+        v1.patch_namespaced_replica_set_scale(name, namespace, body)
