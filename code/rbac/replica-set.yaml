@@ -1,0 +1,17 @@
+# Source: https://proquest.techbus.safaribooksonline.de/book/networking/9781491935668/6dot-labels-and-annotations/labels_and_annotations_html#X2ludGVybmFsX0h0bWxWaWV3P3htbGlkPTk3ODE0OTE5MzU2NjglMkZpZG0xMzk2MzgzNzc3NzQyNTZfaHRtbCZxdWVyeT1yYmFj
+
+apiVersion: extensions/v1beta1
+kind: ReplicaSet
+metadata:
+  name: kuard-rs
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: kuard
+        version: "2"
+    spec:
+      containers:
+        - name: kuard
+          image: "gcr.io/kuar-demo/kuard-amd64:2"
