@@ -1,0 +1,46 @@
+%% example text content
+%% scrartcl and scrreprt starts with section, subsection, subsubsection, ...
+%% scrbook starts with part (optional), chapter, section, ...
+\chapter{Security Layers}
+
+In Kubernetes there are many aspects to consider when looking at it from a security perspective. With its flexibility also comes considerable complexity. In order to come by it and discuss it in a structured manner, we have created the model depicted in Figure~\ref{fig:secmodel}. It is aimed at giving a holistic view over all aspects that might influence the security of a Kubernetes cluster and uses structure ideas from~\textcite{securingkubernetes} and~\textcite{kubernetessecurity}.
+
+\myfig{security_model.png} %% filename in figures folder
+  {width=0.6\textwidth,height=0.6\textheight}%% maximum width/height, aspect ratio will be kept
+  {This security model shows the different layers that have to be considered when holistically regarding Kubernetes security.}%% caption
+  {Security Model}%% optional (short) caption for table of figures
+  {fig:secmodel}%% label
+
+The model is composed of the following four layers:
+
+\begin{enumerate}
+    \item The lowest layer we call \textbf{Base Infrastructure Security} and it concerns all components on which Kubernetes itself builds. These include the Operating System, the container engine (most likely Docker), and the infrastructure of the public or private cloud provider when for example using Google Cloud Platform or Amazon Web Services as an Infrastructure as a Service (IaaS) provider. This layer is described in chapter \ref{sec:layer1}.
+    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in chapter \ref{sec:layer2}. It concerns everything related to Kubernetes' control-plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting control-plane traffic.
+    \item Additionally to the configuration of the Kubernetes control-plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in detail in Section \ref{sec:layer3}.
+    \item The top-most layer is called \textbf{App and Container Security} and makes use of all layers underneath it. On this layer, the actual applications run in containers, which in turn are located in pods. Exploiting of vulnerabilities in the application code might breach this layer. These topics are described in detail in Section \ref{sec:layer4}.
+\end{enumerate}
+
+Sometimes it might not be entirely clear into which layer certain security aspects should be grouped in the model, as the boundaries can be blurry, but it still provides structure to discuss them.
+
+The layered architecture also makes sense when considering damage control aspects of Kubernetes security: As one layer on the top breaches, the lower layers can still prevent further damage. For example, when there is a vulnerability in the application code on layer 4, a properly configured set of permissions on layer 3 for the pod might still prevent further damage. Inversely, an insecure port left open in a control plane component, such as the API server, on layer 2 might allow an attacker to infiltrate a whole cluster, taking over all pods, containers and applications on the upper layers. 
+	
+\section{Base Infrastructure Security} \label{sec:layer1}
+
+\section{Kubernetes Infrastructure Security} \label{sec:layer2}
+
+\section{Kubernetes Security Controls} \label{sec:layer3}
+
+
+An example of this might be an application that should not have any access to the Kubernetes API, as it does not need to display or control any cluster components. Its service account should be configured so that it does not allow 
+
+\section{App and Container Security} \label{sec:layer4}
+
+%% vim:foldmethod=expr
+%% vim:fde=getline(v\:lnum)=~'^%%%%\ .\\+'?'>1'\:'='
+%%% Local Variables: 
+%%% mode: latex
+%%% mode: auto-fill
+%%% mode: flyspell
+%%% eval: (ispell-change-dictionary "en_US")
+%%% TeX-master: "main"
+%%% End: 
