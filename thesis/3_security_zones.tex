@@ -89,7 +89,9 @@ Since RBAC is the de facto standard for authorisation in modern Kubernetes clust
 
 \myfig{rbac.png}{width=0.5\textwidth}{This graphic from~\textcite{k8sCookBook} depicts the basic building blocks of RBAC.}{RBAC building blocks}{fig:rbac}
 
-The basic building blocks of RBAC are depicted in Figure \ref{fig:rbac}. \textit{Roles} are used to define access to certain \textit{Resources}. A role that allows reading pods is created by applying a YAML file like this: 
+The basic building blocks of RBAC are depicted in Figure \ref{fig:rbac}. \textit{Roles} are used to define access to certain \textit{Resources}. Rules can either cluster-wider or namespace wide, depending on the objects they control access to.
+
+A role that allows reading pods is created by applying a YAML file like this: 
 
 \begin{lstlisting}[frame=single]
 kind: Role
@@ -123,7 +125,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 \end{lstlisting}
 
-As for all security configurations, the principle of Least Privilege applies especially when it comes to the configuration of RBAC. It has been initially defined by~\textcite{leastPrivilege} as \enquote{Every program and every privileged user of the system should operate using the least amount of privilege necessary to complete the job.}. Applied to Kubernetes API access control, this means: an application that does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. Section \ref{sec:???}. shows a practical example of an RBAC configuration that adheres to this principle.
+As for all security configurations, the principle of Least Privilege applies especially when it comes to the configuration of RBAC. It has been initially defined by~\textcite{leastPrivilege} as \enquote{Every program and every privileged user of the system should operate using the least amount of privilege necessary to complete the job.}. 
+
+Applied to Kubernetes API access control, this means that an application which does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. As pointed out by \textcite{kubernetessecurity}, it is therefore recommended to disable the auto-mounting of the default service account into pods by setting \mycode{automountServiceAccountToken: false} in the pod specification. 
+
+Section \ref{sec:???}. shows another practical example of an RBAC configuration that adheres to this principle.
 
 % TODO ref to section where this is done
 
