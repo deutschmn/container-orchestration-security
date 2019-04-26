@@ -14,10 +14,10 @@ In Kubernetes there are many aspects to consider when looking at it from a secur
 The model is composed of the following four layers:
 
 \begin{enumerate}
-    \item The lowest layer we call \textbf{Base Infrastructure Security} and it concerns all components on which Kubernetes itself builds. These include the Operating System, the container engine (most likely Docker), and the infrastructure of the public or private cloud provider when for example using Google Cloud Platform or Amazon Web Services as an Infrastructure as a Service (IaaS) provider. This layer is described in chapter \ref{sec:layer1}.
-    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in chapter \ref{sec:layer2}. It concerns everything related to Kubernetes' control-plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting control-plane traffic.
-    \item Additionally to the configuration of the Kubernetes control-plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in detail in Section \ref{sec:layer3}.
-    \item The top-most layer is called \textbf{App and Container Security} and makes use of all layers underneath it. On this layer, the actual applications run in containers, which in turn are located in pods. Exploiting of vulnerabilities in the application code might breach this layer. These topics are described in detail in Section \ref{sec:layer4}.
+    \item The lowest layer we call \textbf{Base Infrastructure Security} and it concerns all components on which Kubernetes itself builds. These include the Operating System, the container engine (most likely Docker), and the infrastructure of the public or private cloud provider when for example using Google Cloud Platform or Amazon Web Services as an Infrastructure as a Service (IaaS) provider. This layer is described in chapter~\ref{sec:layer1}.
+    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in chapter~\ref{sec:layer2}. It concerns everything related to Kubernetes' control-plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting control-plane traffic.
+    \item Additionally to the configuration of the Kubernetes control-plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in detail in Section~\ref{sec:layer3}.
+    \item The top-most layer is called \textbf{App and Container Security} and makes use of all layers underneath it. On this layer, the actual applications run in containers, which in turn are located in pods. Exploiting of vulnerabilities in the application code might breach this layer. These topics are described in detail in Section~\ref{sec:layer4}.
 \end{enumerate}
 
 Sometimes it might not be entirely clear into which layer certain security aspects should be grouped in the model, as the boundaries can be blurry, but it still provides structure to discuss them.
@@ -40,34 +40,93 @@ Kubernetes provides cluster operates with an extensive set of options and tools 
 
 \subsection{Namespaces} \label{sec:namespaces}
 
-As described in the documentation \cite{k8sdocsNamespaces}, every resource in a Kubernetes cluster belongs to a namespace. All resources belonging to the control-plane components reside within the \mycode{kube-system} namespace, while by default all other objects are located in the \mycode{default} namespace. 
+As described in the documentation~\textcite{k8sdocs}, every resource in a Kubernetes cluster belongs to a namespace. All resources belonging to the control-plane components reside within the \mycode{kube-system} namespace, while by default all other objects are located in the \mycode{default} namespace. 
 
-Generally, namespaces can be used to avoid naming conflicts, but also to allow for finer grained access control. For example, as described in Section \ref{sec:apiAccessControl}, an RBAC Role can be created so that all pods from a particular namespace can be listed, but not for any other namespace. Use of this feature makes sense primarily when the cluster is used by a large number of users from, for example, different projects or departments.
+Generally, namespaces can be used to avoid naming conflicts, but also to allow for finer grained access control. For example, as described in Section~\ref{sec:apiAccessControl}, an RBAC Role can be created so that all pods from a particular namespace can be listed, but not for any other namespace. Use of this feature makes sense primarily when the cluster is used by a large number of users from, for example, different projects or departments.
 
 
 \subsection{API Access Control} \label{sec:apiAccessControl}
 
 % TODO ref to preliminaries where API server is explained
-As explained in TODO, the only component in a Kubernetes cluster that is allowed to modify the cluster state directly is the API server. Therefore all requests that involve reading or modifying the cluster state must be performed via the Kubernetes API. It is well documented in \cite{k8sdocsApi} and is very powerful, as it is also used by all control-plane components to communicate. Hence it needs to be carefully protected from unauthorised access. The API server achieves that using three steps to very if and how a request should be performed, as depicted in Figure \ref{fig:apiServerAccessControl}.
+As explained in TODO, the only component in a Kubernetes cluster that is allowed to modify the cluster state directly is the API server. Therefore all requests that involve reading or modifying the cluster state must be performed via the Kubernetes API. It is well documented in~\textcite{k8sdocsApi} and is very powerful, as it is also used by all control-plane components to communicate. Hence it needs to be carefully protected from unauthorised access. The API server achieves that using three steps to very if and how a request should be performed, as depicted in Figure~\ref{fig:apiServerAccessControl}.
 
-\myfig{api_access_control_itnext.png}{width=0.8\textwidth}{This image from \cite{securingkubernetesConfK8SClusterComponents} displays the steps performed by the API server before it persists a request made to it.}{API server access control flow}{fig:apiServerAccessControl} % TODO maybe make a picture myself
+\myfig{api_access_control_itnext.png}{width=0.8\textwidth}{This image from~\textcite{securingkubernetesConfK8SClusterComponents} displays the steps performed by the API server before it persists a request made to it.}{API server access control flow}{fig:apiServerAccessControl} % TODO maybe make a picture myself
 
 First, \textbf{Authentication} is performed to determine the identity of the user or system that is trying to access the API. After the identity of the accessing party has been determined, \textbf{Authorisation} is used to decide whether they are allowed to access or modify the requested resource. Finally \textbf{Admission Controllers} are applied to the request to validate or mutate it, before it is ultimately persisted.
 
 \subsubsection{Authentication} \label{authentication}
 
-Users in Kubernetes can be either service accounts or normal users. The former are managed directly by Kubernetes, whereas for the latter no Kubernetes objects exist. The API server offers multiple strategies to authenticate such users. 
+Users in Kubernetes can be either service accounts or human users. The former are managed directly by Kubernetes, whereas for the latter no Kubernetes objects exist. The API server offers multiple strategies to authenticate such users. 
 
 \begin{itemize}
-	\item The default means of authentication between control plane components is using \textbf{X.509 certificates} within the public key infrastructure (PKI) of the cluster. For that to function, the API server is handed the Certificate Authority (CA) file using the start-up parameter \mycode{--client-ca-file=/path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided CA. % TODO to give this a bit more substance than just a mere paraphrasing of the documentation: maybe describe caveats when using certificates? 
-	\item For testing purposes it is possible to use a \textbf{static password file} as per definition in the RFC 7617 "The 'Basic' HTTP Authentication Scheme" by~\cite{RFC7617}. This, however, should is rarely practical in real-world use cases as the password file needs to be manually maintained.
-	% TODO add other means of authentication (OpenID, Bearer token, etc.)
+    \item The default way of authentication between control plane components is using \textbf{X.509 certificates} within the public key infrastructure (PKI) of the cluster. For that to function, the API server is handed the Certificate Authority (CA) file using the start-up parameter \mycode{--client-ca-file=/path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided CA. 
+
+    % TODO to give this a bit more substance than just a mere paraphrasing of the documentation: maybe describe caveats when using certificates? 
+    
+    % TODO mention that there is no CRL and OSCP support see~\textcite{securingkubernetesSecComponents} (https://blog.giantswarm.io/applying-best-practice-security-controls-to-a-kubernetes-cluster/)
+    
+    \item For testing purposes it is possible to use a \textbf{static password file} as per the definition in the RFC 7617 "The 'Basic' HTTP Authentication Scheme" by~\textcite{RFC7617}. However, it is rarely practical in real-world use cases as the password file needs to be manually maintained.
+    % TODO add other means of authentication (OpenID, Bearer token, etc.)
 	
 \end{itemize}
 
 \subsubsection{Authorisation} \label{authorisation}
 
-% ... An example of this might be an application that should not have any access to the Kubernetes API, as it does not need to display or control any cluster components. Its service account should be configured so that it does not allow 
+Authentication considers no actual permissions. It only determines the identity of the authenticating entity and several attributes about it, such as the username and group memberships. The authorisation step is when the actual mapping step of who is allowed to do what happens. 
+
+As is the case for authentication, Kubernetes also provides several options for how authorisation can be performed as defined in the documentation~\textcite{k8sdocs}:
+
+\begin{itemize}
+    \item \textbf{Node Authorisation} is used only by \mycode{kubelet}s, so that nodes are equipped with the minimum set of permissions they need to operate within the cluster.
+    \item \textbf{Attribute-based Access Control (ABAC)} grants permissions by explicit policies based on the users' attributes. ABAC, however, has been deprecated since Kubernetes version 1.6 and is not recommended to be used anymore.
+    \item \textbf{Role-based Access Control (RBAC)} defines roles that come with certain permissions. These roles can then be bound to users to grant them access. RBAC is the recommended way of performing authorisation at the time of this writing.
+    \item \textbf{Webhook Mode} queries an external REST service to outsource the authorisation to it.
+\end{itemize}
+
+As~\textcite{ABACvsRBAC} point out, conceptually there are advantages and disadvantages to both ABAC and RBAC. While ABAC provides more flexibility, RBAC lends itself better for analysis and risk assessment. The main advantage of ABAC is that it can perform restrictions based on users' attributes, such as their locations. In the context of Kubernetes, however, its developers~\textcite{ABACvsRBACk8s} argue that only RBAC should be used anymore. That is acceptable primarily as the third step of API access control in Kubernetes, \textit{Admission Control}, can provide filters to accommodate for such finer-grained control.
+
+Since RBAC is the de facto standard for authorisation in modern Kubernetes clusters, in this work, we will only consider it and disregard the other options.
+
+\myfig{rbac.png}{width=0.5\textwidth}{This graphic from~\textcite{k8sCookBook} depicts the basic building blocks of RBAC.}{RBAC building blocks}{fig:rbac}
+
+The basic building blocks of RBAC are depicted in Figure \ref{fig:rbac}. \textit{Roles} are used to define access to certain \textit{Resources}. A role that allows reading pods is created by applying a YAML file like this: 
+
+\begin{lstlisting}[frame=single]
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+\end{lstlisting}
+
+Besides some metadata, a role defines certain API groups (in the above example the \mycode{""} indicate the core API), resources and certain verbs that correspond to the actions that are allowed on the resource. 
+
+In order to assign the role to an \textit{Entity}, in this example case a \mycode{ServiceAccount} called \mycode{example-app-sa}, a \textit{RoleBinding} for the namespace \mycode{default} can be created by applying a YAML file like this:
+
+\begin{lstlisting}[frame=single]
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: example-app-sa 
+  namespace: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+\end{lstlisting}
+
+As for all security configurations, the principle of Least Privilege applies especially when it comes to the configuration of RBAC. It has been initially defined by~\textcite{leastPrivilege} as \enquote{Every program and every privileged user of the system should operate using the least amount of privilege necessary to complete the job.}. Applied to Kubernetes API access control, this means: an application that does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. Section \ref{sec:???}. shows a practical example of an RBAC configuration that adheres to this principle.
+
+% TODO ref to section where this is done
+
 
 \subsubsection{Admission Control} \label{admissionControl}
 
