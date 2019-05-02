@@ -1,0 +1,11 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: exa-backend
+spec:
+  selector:
+    app: exa-backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>ReplicaSets in {% if namespace %} namespace '{{ namespace }}' {% else %} all namespaces {% endif %}</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Desired Replicas</th>
+      <th scope="col">Available Replicas</th>
+      <th scope="col">Ready Replicas</th>
+        <th scope="col">Namespace</th>
+        <th scope="col">Scaling</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for rs in replicaSets %}
+    <tr>
+      <th scope="row">{{ rs["name"] }}</th>
+      <td>{{ rs["desired"] }}</td>
+      <td>{{ rs["available"] }}</td>
+      <td>{{ rs["ready"] }}</td>
+      <td>{{ rs["namespace"] }}</td>
+      <td>
+          <form class="form-inline" method="post" action="/replicasets/{{ rs["namespace"] }}/{{ rs["name"] }}/">
+              <input class="form-control" type="number" value="{{ rs["desired"] }}" name="replicas" id="scale">
+              <button type="submit" class="btn btn-primary">Scale</button>
+          </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

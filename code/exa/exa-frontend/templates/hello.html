@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="list-group">
+  <a href="/pods" class="list-group-item list-group-item-action">Pods in all namespaces</a>
+  <a href="/pods/default" class="list-group-item list-group-item-action">Pods in namespace 'default'</a>
+  <a href="/pods/kube-system" class="list-group-item list-group-item-action">Pods in namespace 'kube-system'</a>
+  <a href="/replicasets" class="list-group-item list-group-item-action">ReplicaSets in all namespaces</a>
+  <a href="/replicasets/default" class="list-group-item list-group-item-action">ReplicaSets in namespace 'default'</a>
+  <a href="/replicasets/kube-system" class="list-group-item list-group-item-action">ReplicaSets in namespace 'kube-system'</a>
+</div>
+
+{% endblock %}

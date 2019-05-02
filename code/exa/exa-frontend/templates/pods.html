@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Pods in {% if namespace %} namespace '{{ namespace }}' {% else %} all namespaces {% endif %}</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">Status</th>
+      <th scope="col">Namespace</th>
+      <th scope="col">IP</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for pod in pods %}
+    <tr>
+      <th scope="row">{{ pod["name"] }}</th>
+      <td>{{ pod["phase"] }}</td>
+      <td>{{ pod["namespace"] }}</td>
+      <td>{{ pod["ip"] }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
