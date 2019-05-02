@@ -125,9 +125,13 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 \end{lstlisting}
 
+Besides \textit{Roles} and \textit{RoleBindings}, there are also \textit{ClusterRoles} and \textit{ClusterRoleBindings} that work similarly, just that they manage permissions on the scope of the whole cluster instead of being bound to a specific namespace.
+
 As for all security configurations, the principle of Least Privilege applies especially when it comes to the configuration of RBAC. It has been initially defined by~\textcite{leastPrivilege} as \enquote{Every program and every privileged user of the system should operate using the least amount of privilege necessary to complete the job.}. 
 
 Applied to Kubernetes API access control, this means that an application which does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. As pointed out by \textcite{kubernetessecurity}, it is therefore recommended to disable the auto-mounting of the default service account into pods by setting \mycode{automountServiceAccountToken: false} in the pod specification. 
+
+
 
 Section \ref{sec:???}. shows another practical example of an RBAC configuration that adheres to this principle.
 
@@ -136,6 +140,40 @@ Section \ref{sec:???}. shows another practical example of an RBAC configuration 
 
 \subsubsection{Admission Control} \label{admissionControl}
 
+% TODO write about admission control
+
+\subsection{Networking}
+
+As described in detail in the article series \textcite{NetworkingExplained} and the documentation \textcite{k8sdocs}, the Kubernetes Networking model \footnote{https://kubernetes.io/docs/concepts/cluster-administration/networking/} is aimed to be very flexible and should allow for easy porting from virtual machines. It is not directly implemented in the Kubernetes core, but rather different plugins can be used to meet its requirements.
+
+From a security perspective, an especially important topic in networking are Network Policies \footnote{https://kubernetes.io/docs/concepts/services-networking/network-policies/}, which allow configuration on which pods are allowed to communicate with each other and with other network endpoints. Network policies are realised in the Kubernetes object \mycode{NetworkPolicy}. Still, not all networking plugins support them.
+
+An example for a \mycode{NetworkPolicy} could look like this:
+
+\begin{lstlisting}[frame=single]
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: example-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: example-app
+  policyTypes:
+  - Egress
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          access: "true"
+\end{lstlisting}
+
+The \mycode{policyTypes} specify whether egress traffic, ingress traffic or both are affected by this policy. The white-list principle applies so that only the specified traffic is allowed. This example applies to all pods with the label \mycode{app} set to \mycode{example-app}. It allows incoming traffic only from pods with the label \mycode{access} set to \mycode{true} and prohibits all outgoing traffic.
+
+In most cases, it makes sense to prohibit egress by default. In this case, even if a pod is entirely hijacked, it cannot directly communicate with the outside world. Of course, however, such a restriction could be bypassed by using a reverse proxy, yet would require more effort from the attacker. % TODO would you really call that "reverse proxy"?
+
+An example of how Network Policies can be used to secure a real-world cluster is given in Section \ref{sec:???}. % TODO ref to relevant section once its written
 
 \section{App and Container Security} \label{sec:layer4}
 
