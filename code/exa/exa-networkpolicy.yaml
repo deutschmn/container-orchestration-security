@@ -6,6 +6,9 @@ spec:
   podSelector:
     matchLabels:
       app: exa-backend
+  policyTypes:
+  - Egress
+  - Ingress
   ingress:
   - from:
     - podSelector:

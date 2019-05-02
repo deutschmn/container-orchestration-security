@@ -1,3 +1,4 @@
+import requests
 from flask import Flask, request, url_for, jsonify
 
 from k8s import K8S
@@ -63,6 +64,23 @@ def editReplicaSetScale(namespace, name):
     k8s.scale_replica_set(name, namespace, int(scale))
 
     return jsonify({"status": "ok"})
+
+
+@app.route('/outside')
+def helloOutside():
+    try:
+        host = "https://tugraz.at"
+        r = requests.get(host, timeout=5)
+        return jsonify({
+            "message": "ok",
+            "status": r.status_code,
+            "host": host
+        })
+    except Exception as e:
+        return jsonify({
+            "message": "error",
+            "error": str(e)
+        })
 
 
 if __name__ == '__main__':
