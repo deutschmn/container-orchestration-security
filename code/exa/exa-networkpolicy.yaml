@@ -7,7 +7,7 @@ spec:
     matchLabels:
       app: exa-backend
   policyTypes:
-  - Egress
+#  - Egress
   - Ingress
   ingress:
   - from:
