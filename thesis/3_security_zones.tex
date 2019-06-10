@@ -24,7 +24,31 @@ The layered architecture also makes sense when considering damage control aspect
 	
 \section{Base Infrastructure Security} \label{sec:layer1}
 
-% TODO write Base Infrastructure Security
+The base infrastructure in which a Kubernetes cluster is run sets the foundation for the whole cluster's security, as explained in~\textcite{securingkubernetesBaseInfra}. However well-tuned the Kubernetes cluster configuration is, a breach in the underlying infrastructure of a Kubernetes component can compromise the whole cluster. Depending on whether a cluster runs in a public or private cloud environment, some of the following guidelines may apply. When a cluster runs in a managed environment, such as on Google Kubernetes Engine (GKE) or Amazon Elastic Container Service for Kubernetes (Amazon EKS), a lot of this configuration may already be taken care of by the provider.
+
+\paragraph{Operating System}
+
+Every component in Kubernetes is run by an underlying operating system, mostly a flavour of Linux. While vulnerabilities in the OS itself are outside the scope of this thesis, some general guidelines should be followed to minimise the risk of a breach on OS level:
+
+\begin{itemize}
+    \item An operating system with container support that has a minimal attack surface should be used, such as \textit{CoreOS Container Linux}\footnote{\url{https://coreos.com/os/docs/latest/}, accessed 2019-06-10} or \textit{k3OS}\footnote{\url{https://k3os.io}, accessed 2019-06-10} that has been specifically designed for Kubernetes.
+    \item Just like Kubernetes should be regularly patched, the operating system kernel should also be running at the most recent version at all times.
+    \item For many Linux distributions there are hardening guides that can be used as a reference for the system configuration, such as the \textit{CoreOS Container Linux hardening guide}\footnote{\url{https://coreos.com/os/docs/latest/hardening-guide.html}, accessed 2019-06-10}. 
+\end{itemize}
+
+\paragraph{Container Runtime}
+
+Upon the OS builds the container runtime in which all containers are run in the cluster. Today, mostly the runtime is \textit{Docker}\footnote{\url{https://www.docker.com}, accessed 2019-06-10}, but also alternatives that comply with the \textit{Kubernetes Container Runtime Interface}\footnote{\url{https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/}, accessed 2019-06-10} such as \textit{containerd}\footnote{\url{https://containerd.io}, accessed 2019-06-10} gain traction.
+
+As with the OS, also the container runtime should always be up-to-date and configured securely. It is essential not to forget about it in the stack and acknowledge that containers are not virtual machines and do not provide the same kind of isolation. A breach out of a container can, therefore, mean that not only a pod, but an entire node can be compromised.
+
+\paragraph{Network environment}
+
+Outside access to cluster resources should be as restricted as possible. In most configurations, access to functionality provided by the cluster is exposed only via Kubernetes Services. Hence it is not necessary for every node to be exposed publicly. The attack surface of the whole cluster can, therefore, be reduced by putting all nodes in a private network and exposing only the services via a load balancer.
+
+\paragraph{Trusted Platform Modules}
+
+\acp{TPM}, as standardised in~\textcite{TPMStandard}, can be a powerful addition to the base infrastructure to increase its security. As demonstrated by~\textcite{TPM}, \acp{TPM} can be used to store cryptographic keys that stay secure from an attacker even if an entire node is compromised. 
 
 \section{Kubernetes Infrastructure Security} \label{sec:layer2}
 
