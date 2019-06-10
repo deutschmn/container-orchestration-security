@@ -44,7 +44,7 @@ Generally, namespaces can be used to avoid naming conflicts, but also to allow f
 
 Namespaces can sometimes alleviate the need for creating separate clusters to isolate components from each other. Some use cases might include different namespaces per team, app or environment (such as different namespaces for development, testing and production). 
 
-% TODO Anmerkung Stefan: bei namespaces machts evtl auch sinn zu erklären, auf welchem level die was tun. also zB nur auf API access level, oder setzen die zB auch firewall regeln, das pods in einem namespace nicht mit einem aus einem anderen reden können; machen die irgendwas im filesystem, oä?
+However, as pointed out in~\textcite{namespacesInsights}, while namespaces are suited well for logical partitioning and assigning permission sets on API access level, they do not enforce the partitioning by setting firewall rules or such. Any cluster user or resource can access any other resource in the cluster, even when they are in different namespaces. To achieve partitioning on the network level, see Section~\ref{networking}.
 
 \subsection{API Access Control} \label{sec:apiAccessControl}
 
@@ -157,7 +157,7 @@ An especially important admission controller with respect to security is the bui
 
 Besides standard admission controllers that ship with Kubernetes and should be disabled or altered only under certain circumstances, there is also support for custom controllers that build upon the standard \mycode{Mutating AdmissionWebhook} or \mycode{ValidatingAdmissionWebhook}. These allow for high flexibility as their admission is based on a REST call to a service running within the cluster. This feature can be used to develop custom restrictions, such as this example\footnote{\url{https://github.com/stackrox/admission-controller-webhook-demo}, accessed 2019-05-28} that causes all containers to be run with a non-root user, except they are explicitly marked to do otherwise. 
 
-\subsection{Networking}
+\subsection{Networking} \label{networking}
 
 % TODO Anmerkung Stefan: da würd ich noch ausführen welches networkign eigentlich gemeint is, also das auf der control pane oder das zwischen den nodes oder das von außen, was hat das mit ingress zu tun (ingress eigentlich wo erklärt?), und evtl wie die plugins das ungefähr umsetzen (iptables generieren oä?)
 
