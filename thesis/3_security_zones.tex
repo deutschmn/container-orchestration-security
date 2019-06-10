@@ -57,9 +57,11 @@ First, \textbf{Authentication} is performed to determine the identity of the use
 
 \subsubsection{Authentication} \label{authentication}
 
-% TODO write more about service accounts (Anmerkung Stefan) + erklären "whereas for the latter no Kubernetes objects exist." - was hat das für auswirkungen? wie macht man dann noch RBAC damit?
+Users in Kubernetes can be either Service Accounts or normal (human) users. 
 
-Users in Kubernetes can be either service accounts or human users. The former are managed directly by Kubernetes, whereas for the latter no Kubernetes objects exist. The API server offers multiple strategies to authenticate such users, a subset of which are the following:
+Service Accounts are managed directly by Kubernetes and give identities to apps running inside pods as described in~\textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/}, accessed 2019-06-10}. With these identities, the applications can access the API server. Service Accounts are Kubernetes objects and are stored in \mycode{etcd}. A pod can be configured to use a particular service account, which results in the corresponding certificates being mounted into the pod's file system. With these, the application running in it can authenticate with the API server. 
+
+For human users, no Kubernetes objects in \mycode{etcd} exist. The administration of those is outsourced to an external entity. The API server offers multiple strategies to authenticate such users, a subset of which are the following:
 
 \begin{itemize}
     \item The default way of authentication between control plane components is using \textbf{X.509 certificates} within the \ac{PKI} of the cluster. For that to function, the API server is handed the \ac{CA} file using the start-up parameter \mycode{--client-ca-file= /path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided CA. 
@@ -74,7 +76,7 @@ Users in Kubernetes can be either service accounts or human users. The former ar
 	
 \end{itemize}
 
-Authentication considers no actual permissions. It only determines the identity of the authenticating entity and several attributes about it, such as the username and group memberships. The next step, authorisation, is when the actual mapping step of who is allowed to do what happens. 
+Authentication considers no actual permissions. It only determines the identity of the authenticating entity and several attributes about it, such as the username and group memberships. This information is passed on to the next step, authorisation, in which the actual mapping step of who is allowed to do what happens. 
 
 \subsubsection{Authorisation} \label{authorisation}
 
@@ -83,17 +85,13 @@ As is the case for authentication, Kubernetes also provides several options for 
 \begin{itemize}
     \item \textbf{Node Authorisation} is used only by \mycode{kubelet}s, so that nodes are equipped with the minimum set of permissions they need to operate within the cluster.
     \item \textbf{\ac{ABAC}} grants permissions by explicit policies based on the users' attributes. \ac{ABAC}, however, has been deprecated since Kubernetes version 1.6 and is not recommended to be used anymore.
-    \item \textbf{\ac{RBAC}} defines roles that come with certain permissions. These roles can then be bound to users to grant them access. \ac{RBAC} is the recommended way of performing authorisation at the time of this writing.
+    \item \textbf{\ac{RBAC}} defines roles that come with certain permissions. These roles can then be bound to users to grant them access.
     \item \textbf{Webhook Mode} queries an external REST service to outsource the authorisation to it.
 \end{itemize}
 
+As~\textcite{ABACvsRBAC} point out, conceptually there are advantages and disadvantages to both \ac{ABAC} and \ac{RBAC}. While \ac{ABAC} provides more flexibility, \ac{RBAC} lends itself better for analysis and risk assessment. The main advantage of \ac{ABAC} is that it can perform restrictions based on users' attributes, such as their locations. In the context of Kubernetes, however, its developers~\textcite{ABACvsRBACk8s} argue that only \ac{RBAC} should be used anymore. That is acceptable primarily as the third step of API access control in Kubernetes, \textit{Admission Control}, can provide filters to accommodate for such finer-grained control.
 
-
-As~\textcite{ABACvsRBAC} point out, conceptually there are advantages and disadvantages to both \ac{ABAC} and \ac{RBAC}. While \ac{ABAC} provides more flexibility, \ac{RBAC} lends itself better for analysis and risk assessment. The main advantage of \ac{ABAC} is that it n perform restrictions based on users' attributes, such as their locations. In the context of Kubernetes, however, its developers~\textcite{ABACvsRBACk8s} argue that only \ac{RBAC} should be used anymore. That is acceptable primarily as the third step of API access control in Kubernetes, \textit{Admission Control}, can provide filters to accommodate for such finer-grained control.
-
-% TODO Anmerkung Stefan: noch klarer machen warum RBAC das beste für Admission Control is
-
-Since \ac{RBAC} is the de facto standard for authorisation in modern Kubernetes clusters, in this work, we will only consider it and disregard the other options.
+\ac{RBAC} is the recommended way of performing authorisation at the time of this writing, as it is easier to understand and configure than \ac{ABAC} while retaining most of its configuration power. Therefore, we will only consider it in this work and disregard the other options.
 
 \paragraph{\ac{RBAC}}
 
@@ -139,7 +137,7 @@ Besides \textit{Roles} and \textit{RoleBindings}, there are also \textit{Cluster
 
 As for all security configurations, the principle of Least Privilege applies especially when it comes to the configuration of \ac{RBAC}. It has been initially defined by~\textcite{leastPrivilege} as \enquote{Every program and every privileged user of the system should operate using the least amount of privilege necessary to complete the job.}. 
 
-Applied to Kubernetes API access control, this means that an application which does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. As pointed out by \textcite{kubernetessecurity}, it is therefore recommended to disable the auto-mounting of the default service account into pods by setting \mycode{automountServiceAccountToken: false} in the pod specification. 
+Applied to Kubernetes API access control, this means that an application which does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. As pointed out by \textcite{kubernetessecurity}, it is therefore recommended to disable the auto-mounting of the default Service Account into pods by setting \mycode{automountServiceAccountToken: false} in the pod specification. 
 
 
 
@@ -152,18 +150,22 @@ Section \ref{sec:???}. shows another practical example of an \ac{RBAC} configura
 
 As described in \cite{admissionControl} and \cite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/}, accessed 2019-05-25}, admission control allows for a set of plug-ins to enforce rules about how a cluster is used, by being applied after a request to the API server has passed authentication and authorisation. These plug-ins can be either \textit{mutating}, \textit{validating} or both. First, all mutating admission controllers are executed, then the validating controllers. If any of them rejects the request, the processing is aborted and the request is rejected.
 
-An especially important admission controller with respect to security is the built-in \mycode{PodSecurityPolicy}. It can be used to forbid containers running with privileged users or set containers' file systems to read-only. Both of these are sensible best practices, as further explained in the context of container security in Section \ref{???}. % TODO write this section, then ref to it
-% TODO maybe elaborate on PodSecurityPolicies -> Anmerkung Stefan: bei bedarf darf hier gerne ein example PodSecurityPolicy AC rein
+An especially important admission controller with respect to security is the built-in \mycode{PodSecurityPolicy}. It can be used to forbid containers running with privileged users or set containers' file systems to read-only. Both of these are sensible best practices, as further explained in the context of container security in Section \ref{sec:layer4}.
+% TODO maybe elaborate on PodSecurityPolicies -> Anmerkung Stefan: bei bedarf darf hier gerne ein example PodSecurityPolicy AC rein -> revisit this later, maybe enough to give example in the example configuration section
 
 Besides standard admission controllers that ship with Kubernetes and should be disabled or altered only under certain circumstances, there is also support for custom controllers that build upon the standard \mycode{Mutating AdmissionWebhook} or \mycode{ValidatingAdmissionWebhook}. These allow for high flexibility as their admission is based on a REST call to a service running within the cluster. This feature can be used to develop custom restrictions, such as this example\footnote{\url{https://github.com/stackrox/admission-controller-webhook-demo}, accessed 2019-05-28} that causes all containers to be run with a non-root user, except they are explicitly marked to do otherwise. 
 
 \subsection{Networking} \label{networking}
 
-% TODO Anmerkung Stefan: da würd ich noch ausführen welches networkign eigentlich gemeint is, also das auf der control pane oder das zwischen den nodes oder das von außen, was hat das mit ingress zu tun (ingress eigentlich wo erklärt?), und evtl wie die plugins das ungefähr umsetzen (iptables generieren oä?)
+Communication between Kubernetes components and the outside world is a central aspect for Kubernetes to function. As described in detail in the article series \textcite{NetworkingExplained} and in the documentation \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/cluster-administration/networking/}, accessed 2019-06-10}, it can be broken down in to several aspects:
 
-As described in detail in the article series \textcite{NetworkingExplained} and the documentation \textcite{k8sdocs}, the Kubernetes Networking model\footnote{\url{https://kubernetes.io/docs/concepts/cluster-administration/networking/}, accessed 2019-05-28} is aimed to be very flexible and should allow for easy porting from virtual machines. It is not directly implemented in the Kubernetes core, but rather different plugins can be used to meet its requirements.
+\begin{itemize}
+    \item Containers within the same pod communicate with each other via localhost.
+    \item Pods communicate with other pods and with the control plane adhering to the Kubernetes Networking model\footnote{\url{https://kubernetes.io/docs/concepts/cluster-administration/networking/\#the-kubernetes-network-model}, accessed 2019-06-10} that defines an overlay network for that purpose. The model is aimed to be very flexible and should allow for easy porting from virtual machines. It mainly builds upon the premise that pods can be addressed with their own IP addresses, despite multiple pods running on the same node. The network model is not directly implemented in the Kubernetes core, but rather different plugins can be used to meet its requirements. These plugins integrate with nodes and their kernels to establish the layer 3 (network layer) communication as defined in~\textcite{osiModel}.
+    \item Communication with the outside world is handled by Services that can be bound to  Ingress\footnote{\url{https://kubernetes.io/docs/concepts/services-networking/ingress/}, accessed 2019-06-10} objects. % TODO ref to prelims
+\end{itemize}
 
-From a security perspective, an especially important topic in networking are Network Policies \footnote{\url{https://kubernetes.io/docs/concepts/services-networking/network-policies/}, accessed 2019-05-28}, which allow configuration on which pods are allowed to communicate with each other and with other network endpoints. Network policies are realised in the Kubernetes object \mycode{NetworkPolicy}. Still, not all networking plugins support them.
+From a security perspective, an especially important topic in networking are Network Policies\footnote{\url{https://kubernetes.io/docs/concepts/services-networking/network-policies/}, accessed 2019-05-28}, which allow configuration on which pods are allowed to communicate with each other and with other network endpoints. Network policies are realised in the Kubernetes object \mycode{NetworkPolicy}. Still, not all networking plugins support them.
 
 An example for a \mycode{NetworkPolicy} could look like this:
 
