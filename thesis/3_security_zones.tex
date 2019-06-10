@@ -101,7 +101,11 @@ The basic building blocks of \ac{RBAC} are depicted in Figure \ref{fig:rbac}. \t
 
 A role that allows reading pods is created by applying a YAML file like this: 
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -111,13 +115,17 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
-\end{lstlisting}
+\end{minted}
 
 Besides some metadata, a role defines certain API groups (in the above example the \mycode{""} indicate the core API), resources and certain verbs that correspond to the actions that are allowed on the resource. 
 
 In order to assign the role to an \textit{Entity}, in this example case a \mycode{ServiceAccount} called \mycode{example-app-sa}, a \textit{RoleBinding} for the namespace \mycode{default} can be created by applying a YAML file like this:
 
-\begin{lstlisting}[frame=single]
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -131,7 +139,7 @@ roleRef:
   kind: Role
   name: pod-reader
   apiGroup: rbac.authorization.k8s.io
-\end{lstlisting}
+\end{minted}
 
 Besides \textit{Roles} and \textit{RoleBindings}, there are also \textit{ClusterRoles} and \textit{ClusterRoleBindings} that work similarly, just that they manage permissions on the scope of the whole cluster instead of being bound to a specific namespace.
 
@@ -169,24 +177,28 @@ From a security perspective, an especially important topic in networking are Net
 
 An example for a \mycode{NetworkPolicy} could look like this:
 
-\begin{lstlisting}[frame=single]
-kind: NetworkPolicy
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: example-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: example-app
-  policyTypes:
-  - Egress
-  - Ingress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          access: "true"
-\end{lstlisting}
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+  kind: NetworkPolicy
+  apiVersion: networking.k8s.io/v1
+  metadata:
+    name: example-policy
+  spec:
+    podSelector:
+      matchLabels:
+        app: example-app
+    policyTypes:
+    - Egress
+    - Ingress
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            access: "true"
+\end{minted}
 
 The \mycode{policyTypes} specify whether egress traffic, ingress traffic or both are affected by this policy. The white-list principle applies so that only the specified traffic is allowed. This example applies to all pods with the label \mycode{app} set to \mycode{example-app}. It allows incoming traffic only from pods with the label \mycode{access} set to \mycode{true} and prohibits all outgoing traffic.
 
