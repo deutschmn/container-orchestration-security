@@ -52,7 +52,46 @@ Outside access to cluster resources should be as restricted as possible. In most
 
 \section{Kubernetes Infrastructure Security} \label{sec:layer2}
 
-% TODO Kubernetes Infrastructure Security
+When setting up and administering a Kubernetes cluster, there are many configurations that, at first sight, do not appear to be critical to security. Still, the following aspects, which mostly are related to control-plane components, must not be neglected to ensure a secure cluster setup. Many best practice guidelines are listed in~\textcite{kubernetessecurity}.
+
+\paragraph{Cluster installers}
+
+While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. As emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}, cluster, while most installers come with sane default values, it is crucial to verify them and check what is done under the hood. 
+
+\subsection{Kubelets}
+
+% TODO ref to prelims or explain what kubelets are
+
+A Kubelet is an agent running on every node that is responsible for running its pods, reporting metrics and similar. It receives its commands from the control-plane and for that provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control-plane. 
+
+This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place. In the Kubernetes version current at the time of this writing, the insecure port is closed by default and the secure ones by default calls back to the API server to verify whether a request should be allowed. 
+
+% TODO write more about Kubelet security (see security book)
+
+\subsection{API server}
+
+% TODO write about API server
+
+\subsection{etcd}
+
+\mycode{etcd} is the central storage location in Kubernetes that stores all cluster data in a key-value data structure. The API server is the only component that is supposed to communicate with it directly. % TODO check whether this will already have been explained in prelims, if so, link
+
+\paragraph{Access restriction}
+In order to enforce that only the API server can access it, \mycode{etcd}, network policies, as later described in Section~\ref{ssec:networking}, should set up and an adequate certificate configuration\footnote{\url{https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/security.md}, accessed 2019-06-11} should be put in place.
+
+\paragraph{Encryption}
+One important aspect regarding \mycode{etcd} security is that, by default, all data is stored in plain text. As \mycode{etcd} also stores all Secrets, sensitive information might be exposed, if the data on the volume used by \mycode{etcd} leaks. In order to mitigate that, encryption can and should be enabled by providing the API server with an encryption configuration using the startup parameter \mycode{--encryption-provider-config} as described in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/}, accessed 2019-06-11}. % TODO are secrets already explained, if so, link to them
+
+
+\subsection{Kubernetes Dashboard}
+
+As the recent incident at Tesla, described in~\textcite{teslaLeak}, illustrates, leaving the Dashboard exposed to the public internet or leaving it configured insecurely can compromise the security of an entire cluster. Therefore~\textcite{kubernetessecurity} suggest to follow these guidelines to secure it:
+
+\begin{itemize}
+    \item Only authenticated users should be allowed access.
+    \item The service account the Dashboard is using should have limited privileges so that users cannot misuse its permissions when choosing not to sign in with their account.
+    \item The dashboard should not be exposed to the public internet.
+\end{itemize}
 
 \section{Kubernetes Security Controls} \label{sec:layer3}
 
@@ -68,7 +107,7 @@ Generally, namespaces can be used to avoid naming conflicts, but also to allow f
 
 Namespaces can sometimes alleviate the need for creating separate clusters to isolate components from each other. Some use cases might include different namespaces per team, app or environment (such as different namespaces for development, testing and production). 
 
-However, as pointed out in~\textcite{namespacesInsights}, while namespaces are suited well for logical partitioning and assigning permission sets on API access level, they do not enforce the partitioning by setting firewall rules or such. Any cluster user or resource can access any other resource in the cluster, even when they are in different namespaces. To achieve partitioning on the network level, see Section~\ref{networking}.
+However, as pointed out in~\textcite{namespacesInsights}, while namespaces are suited well for logical partitioning and assigning permission sets on API access level, they do not enforce the partitioning by setting firewall rules or such. Any cluster user or resource can access any other resource in the cluster, even when they are in different namespaces. To achieve partitioning on the network level, see Section~\ref{ssec:networking}.
 
 \subsection{API Access Control} \label{sec:apiAccessControl}
 
@@ -79,7 +118,7 @@ As explained in Section \ref{???}, the only component in a Kubernetes cluster th
 
 First, \textbf{Authentication} is performed to determine the identity of the user or system that is trying to access the API. After the identity of the accessing party has been determined, \textbf{Authorisation} is used to decide whether they are allowed to access or modify the requested resource. Finally \textbf{Admission Controllers} are applied to the request to validate or mutate it, before it is ultimately persisted.
 
-\subsubsection{Authentication} \label{authentication}
+\subsubsection{Authentication} \label{ssec:authentication}
 
 Users in Kubernetes can be either Service Accounts or normal (human) users. 
 
@@ -102,7 +141,7 @@ For human users, no Kubernetes objects in \mycode{etcd} exist. The administratio
 
 Authentication considers no actual permissions. It only determines the identity of the authenticating entity and several attributes about it, such as the username and group memberships. This information is passed on to the next step, authorisation, in which the actual mapping step of who is allowed to do what happens. 
 
-\subsubsection{Authorisation} \label{authorisation}
+\subsubsection{Authorisation} \label{ssec:authorisation}
 
 As is the case for authentication, Kubernetes also provides several options for how authorisation can be performed as defined in the documentation~\textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/reference/access-authn-authz/authorization/}, accessed 2019-05-31}:
 
@@ -187,7 +226,7 @@ An especially important admission controller with respect to security is the bui
 
 Besides standard admission controllers that ship with Kubernetes and should be disabled or altered only under certain circumstances, there is also support for custom controllers that build upon the standard \mycode{Mutating AdmissionWebhook} or \mycode{ValidatingAdmissionWebhook}. These allow for high flexibility as their admission is based on a REST call to a service running within the cluster. This feature can be used to develop custom restrictions, such as this example\footnote{\url{https://github.com/stackrox/admission-controller-webhook-demo}, accessed 2019-05-28} that causes all containers to be run with a non-root user, except they are explicitly marked to do otherwise. 
 
-\subsection{Networking} \label{networking}
+\subsection{Networking} \label{ssec:networking}
 
 Communication between Kubernetes components and the outside world is a central aspect for Kubernetes to function. As described in detail in the article series \textcite{NetworkingExplained} and in the documentation \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/cluster-administration/networking/}, accessed 2019-06-10}, it can be broken down in to several aspects:
 
