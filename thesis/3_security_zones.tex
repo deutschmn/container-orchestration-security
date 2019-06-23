@@ -15,8 +15,8 @@ The model is composed of the following four layers:
 
 \begin{enumerate}
     \item The lowest layer we call \textbf{Base Infrastructure Security} and it concerns all components on which Kubernetes itself builds. These include the Operating System, the container engine (most likely Docker), and the infrastructure of the public or private cloud provider when for example using Google Cloud Platform or Amazon Web Services as an \ac{IaaS} provider. This layer is described in Section~\ref{sec:layer1}.
-    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in Section~\ref{sec:layer2}. It concerns everything related to Kubernetes' control-plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting control-plane traffic.
-    \item Additionally to the configuration of the Kubernetes control-plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in detail in Section~\ref{sec:layer3}.
+    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in Section~\ref{sec:layer2}. It concerns everything related to Kubernetes' control plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting control plane traffic.
+    \item Additionally to the configuration of the Kubernetes control plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in detail in Section~\ref{sec:layer3}.
     \item The top-most layer is called \textbf{App and Container Security} and makes use of all layers underneath it. On this layer, the actual applications run in containers, which in turn are located in pods. Exploiting of vulnerabilities in the application code might breach this layer. These topics are described in detail in Section~\ref{sec:layer4}.
 \end{enumerate}
 
@@ -52,35 +52,31 @@ Outside access to cluster resources should be as restricted as possible. In most
 
 \section{Kubernetes Infrastructure Security} \label{sec:layer2}
 
-When setting up and administering a Kubernetes cluster, there are many configurations that, at first sight, do not appear to be critical to security. Still, the following aspects, which mostly are related to control-plane components, must not be neglected to ensure a secure cluster setup. Many best practice guidelines are listed in~\textcite{kubernetessecurity}.
+When setting up and administering a Kubernetes cluster, there are many configurations that, at first sight, do not appear to be critical to security. Still, the following aspects, which mostly are related to control plane components, must not be neglected to ensure a secure cluster setup. Many best practice guidelines are listed in~\textcite{kubernetessecurity}.
 
-\paragraph{Cluster installers}
+\subsection{Cluster installers}
 
-While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. As emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}, cluster, while most installers come with sane default values, it is crucial to verify them and check what is done under the hood. 
-
-\subsection{Kubelets}
-
-% TODO ref to prelims or explain what kubelets are
-
-A Kubelet is an agent running on every node that is responsible for running its pods, reporting metrics and similar. It receives its commands from the control-plane and for that provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control-plane. 
-
-This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place. In the Kubernetes version current at the time of this writing, the insecure port is closed by default and the secure ones by default calls back to the API server to verify whether a request should be allowed. 
-
-% TODO write more about Kubelet security (see security book)
+While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. While most installers come with sane default values, it is crucial to verify them and check what is done under the hood, as emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}. 
 
 \subsection{API server}
 
-% TODO write about API server
+The API server is an essential control plane component, as an attacker that gains control over it has the equivalent of root access to the whole cluster, as described by~\cite{kubernetessecurity}. The critical aspect of how the API itself is secured and how the API server fulfils its role as the cluster's \ac{CA} is described in Section \ref{sec:apiAccessControl}, as this resembles a Kubernetes security control and is therefore grouped in the corresponding layer of our model. Still, any misconfiguration of the API server might mean leaving the front door to the cluster open, which is why its configuration should always be reviewed from a security perspective.
+
+\subsection{Kubelets}
+
+A Kubelet is an agent running on every node that is responsible for running its pods, reporting metrics and similar. It receives its commands from the control plane and for that provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control plane. 
+
+This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place. In the Kubernetes version 1.15, which is the most current one at the time of this writing, the insecure port is closed by default and the secure ones by default calls back to the API server to verify whether a request should be allowed. 
 
 \subsection{etcd}
 
-\mycode{etcd} is the central storage location in Kubernetes that stores all cluster data in a key-value data structure. The API server is the only component that is supposed to communicate with it directly. % TODO check whether this will already have been explained in prelims, if so, link
+\mycode{etcd} is the central storage location in Kubernetes that stores all cluster data in a key-value data structure. The API server is the only component that is supposed to access it directly.
 
 \paragraph{Access restriction}
-In order to enforce that only the API server can access it, \mycode{etcd}, network policies, as later described in Section~\ref{ssec:networking}, should set up and an adequate certificate configuration\footnote{\url{https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/security.md}, accessed 2019-06-11} should be put in place.
+In order to enforce that only the API server can communicate with \mycode{etcd}, network policies, as later described in Section~\ref{ssec:networking}, should set up and an adequate certificate configuration\footnote{\url{https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/security.md}, accessed 2019-06-11} should be put in place.
 
 \paragraph{Encryption}
-One important aspect regarding \mycode{etcd} security is that, by default, all data is stored in plain text. As \mycode{etcd} also stores all Secrets, sensitive information might be exposed, if the data on the volume used by \mycode{etcd} leaks. In order to mitigate that, encryption can and should be enabled by providing the API server with an encryption configuration using the startup parameter \mycode{--encryption-provider-config} as described in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/}, accessed 2019-06-11}. % TODO are secrets already explained, if so, link to them
+By default, all data in \mycode{etcd} is stored in plain text. As it also stores all Secrets, sensitive information might be exposed, if the data on the volume used by \mycode{etcd} leaks. In order to mitigate that, encryption can and should be enabled by providing the API server with an encryption configuration using the startup parameter \mycode{--encryption-provider-config} as described in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/}, accessed 2019-06-11}. % TODO are secrets already explained, if so, link to them
 
 
 \subsection{Kubernetes Dashboard}
@@ -89,7 +85,7 @@ As the recent incident at Tesla, described in~\textcite{teslaLeak}, illustrates,
 
 \begin{itemize}
     \item Only authenticated users should be allowed access.
-    \item The service account the Dashboard is using should have limited privileges so that users cannot misuse its permissions when choosing not to sign in with their account.
+    \item The service account the Dashboard is using should have limited privileges so that users cannot misuse its permissions and rather log in with their own users.
     \item The dashboard should not be exposed to the public internet.
 \end{itemize}
 
@@ -101,7 +97,7 @@ Kubernetes provides cluster operates with an extensive set of options and tools 
 
 As described in the documentation~\textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/}, accessed 2019-05-31}, almost every resource in a Kubernetes cluster belongs to a namespace. Exceptions include only namespaces themselves and some low-level resources such as nodes. 
 
-All resources belonging to the control-plane components reside within the \mycode{kube-system} namespace, while by default all other objects are located in the \mycode{default} namespace. 
+All resources belonging to the control plane components reside within the \mycode{kube-system} namespace, while by default all other objects are located in the \mycode{default} namespace. 
 
 Generally, namespaces can be used to avoid naming conflicts, but also to allow for finer grained access control. For example, using API access control, a role can be created so that a user can list all pods from a particular namespace, but not for any other namespace, as further described in Section~\ref{sec:apiAccessControl}. Using this feature makes sense primarily when the cluster is used by a large number of users from, for example, different projects or departments. 
 
@@ -112,7 +108,7 @@ However, as pointed out in~\textcite{namespacesInsights}, while namespaces are s
 \subsection{API Access Control} \label{sec:apiAccessControl}
 
 % TODO ref to preliminaries where API server is explained
-As explained in Section \ref{???}, the only component in a Kubernetes cluster that is allowed to modify the cluster state in etcd directly is the API server. Therefore all requests that involve reading or modifying the cluster state must be performed via the Kubernetes API. It is well-documented in~\textcite{k8sdocsApi} and is very powerful, as it is also used by all control-plane components to communicate with each other. Hence it needs to be carefully protected from unauthorised access. The API server achieves that using three steps to very if and how a request should be performed, as depicted in Figure~\ref{fig:apiServerAccessControl}.
+As explained in Section \ref{???}, the only component in a Kubernetes cluster that is allowed to modify the cluster state in etcd directly is the API server. Therefore all requests that involve reading or modifying the cluster state must be performed via the Kubernetes API. It is well-documented in~\textcite{k8sdocsApi} and is very powerful, as it is also used by all control plane components to communicate with each other. Hence it needs to be carefully protected from unauthorised access. The API server achieves that using three steps to very if and how a request should be performed, as depicted in Figure~\ref{fig:apiServerAccessControl}.
 
 \myfig{api_access_control_itnext.png}{width=0.8\textwidth}{This image from~\textcite{securingkubernetesConfK8SClusterComponents} displays the steps performed by the API server before it persists a request made to it.}{API server access control flow}{fig:apiServerAccessControl}
 
