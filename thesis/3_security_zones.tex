@@ -267,6 +267,28 @@ An example of how Network Policies can be used to secure a real-world cluster is
 
 \section{App and Container Security} \label{sec:layer4}
 
+The top-most layer of the model concerns the applications that run in the Kubernetes cluster within their container environments. Their security relies on the lower layers while also being protected by them.
+
+\subsection{Application Security}
+
+The biggest attack surface on this layer naturally are the applications themselves. Certainly, the whole class of application vulnerabilities cannot be mitigated entirely. Yet, as described before, Kubernetes provides many damage control tools on lower levels that limit an attacker's possibilities, even when an an application has been compromised. 
+
+\subsection{Container Configuration}
+
+%TODO Write about:
+%* No Root
+%* seccomp
+%    * Docker config overwritten by K8s?
+%* SSHD
+%* No secrets in containers
+
+\subsection{Image Security}
+
+%TODO Write about:
+%* Image scanning
+%* Image policies (https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#imagepolicywebhook)
+
+
 %% vim:foldmethod=expr
 %% vim:fde=getline(v\:lnum)=~'^%%%%\ .\\+'?'>1'\:'='
 %%% Local Variables: 
