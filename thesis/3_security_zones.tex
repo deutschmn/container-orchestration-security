@@ -271,16 +271,43 @@ The top-most layer of the model concerns the applications that run in the Kubern
 
 \subsection{Application Security}
 
-The biggest attack surface on this layer naturally are the applications themselves. Certainly, the whole class of application vulnerabilities cannot be mitigated entirely. Yet, as described before, Kubernetes provides many damage control tools on lower levels that limit an attacker's possibilities, even when an an application has been compromised. 
+The largest attack surface on this layer naturally are the applications themselves. Even though the whole class of application vulnerabilities cannot be mitigated entirely, Kubernetes provides many damage control tools on lower levels that limit an attacker's possibilities, even when an application has been compromised. In this section, several precautions are explained that can be taken on container level to increase cluster security.
 
 \subsection{Container Configuration}
 
-%TODO Write about:
-%* No Root
-%* seccomp
-%    * Docker config overwritten by K8s?
-%* SSHD
-%* No secrets in containers
+\paragraph{Non-privileged containers}
+
+As pointed out in detail in~\textcite{nonPrivContainers}, containers should be run with non-privileged users, as most applications run in containers should not require root permissions. This restriction can be enforced by adding the following statements to the \mycode{PodSecurityPolicy} configuration:
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+allowPrivilegeEscalation: false
+runAsUser:
+  rule: 'MustRunAsNonRoot'
+\end{minted}
+
+One side effect of not running as root is that applications can not bind to well-known ports (\textless 1024), but this can be easily mitigated by using container port binding capabilities of the container runtime.
+
+\paragraph{Minimal containers}
+
+Containers should only run the bare minimum of applications they require to fulfil their aim. It is therefore considered bad practice to run, for example, an SSH server to do maintenance work, as explained in~\textcite{noSSHDinContainers}. Most actions that would require having an SSH server running can also be achieved using Kubernetes features.
+
+\paragraph{Secrets and Configuration}
+
+Secrets and configuration items should not be baked into the container images, but should instead be managed using the Kubernetes objects \mycode{Secret} and \mycode{ConfigMap}. By doing so, they can be more easily adapted and are not prone to leak when a container image leaks.
+
+\paragraph{Rule-based Execution}
+
+As explained in the~\textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/policy/pod-security-policy/}, accessed 2019-06-25}, a \mycode{PodSecurityPolicy} can be used to enforce several rule-based execution restrictions. The configuration options include:
+
+\begin{itemize}
+    \item Using \mycode{seccomp}, as documented in~\textcite{seccompMan}, the syscalls that can be made can be limited. 
+    \item Policies of SELinux\footnote{\url{https://selinuxproject.org/page/Main_Page}, accessed 2019-06-25} and AppArmor\footnote{\url{https://kubernetes.io/docs/tutorials/clusters/apparmor/}, accessed 2019-06-25} can be configured for finer-grained access control. 
+    \item Linux capabilities as explained in~\textcite{linuxCaps} can be limited so that some, but not all capabilities of root can be exercised. 
+\end{itemize}
 
 \subsection{Image Security}
 
