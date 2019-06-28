@@ -24,7 +24,7 @@ The layered architecture also makes sense when considering damage control aspect
 	
 \section{Base Infrastructure Security} \label{sec:layer1}
 
-The base infrastructure in which a Kubernetes cluster is run sets the foundation for the whole cluster's security, as explained in~\textcite{securingkubernetesBaseInfra}. However well-tuned the Kubernetes cluster configuration is, a breach in the underlying infrastructure of a Kubernetes component can compromise the whole cluster. Depending on whether a cluster runs in a public or private cloud environment, some of the following guidelines may apply. When a cluster runs in a managed environment, such as on Google Kubernetes Engine (GKE) or Amazon Elastic Container Service for Kubernetes (Amazon EKS), a lot of this configuration may already be taken care of by the provider.
+The base infrastructure in which a Kubernetes cluster is run sets the foundation for the whole cluster's security, as explained in~\textcite{securingkubernetesBaseInfra}. However well-tuned the Kubernetes cluster configuration is, a breach in the underlying infrastructure of a Kubernetes node can compromise the whole cluster. Depending on whether a cluster runs in a public or private cloud environment, some of the following guidelines may apply. When a cluster runs in a managed environment, such as on Google Kubernetes Engine (GKE) or Amazon Elastic Container Service for Kubernetes (Amazon EKS), a lot of this configuration may already be taken care of by the provider.
 
 \paragraph{Operating System}
 
@@ -38,13 +38,13 @@ Every component in Kubernetes is run by an underlying operating system, mostly a
 
 \paragraph{Container Runtime}
 
-Upon the OS builds the container runtime in which all containers are run in the cluster. Today, mostly the runtime is \textit{Docker}\footnote{\url{https://www.docker.com}, accessed 2019-06-10}, but also alternatives that comply with the \textit{Kubernetes Container Runtime Interface}\footnote{\url{https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/}, accessed 2019-06-10} such as \textit{containerd}\footnote{\url{https://containerd.io}, accessed 2019-06-10} gain traction.
+Upon the OS builds the container runtime in which all containers are run in the cluster. At the time of this writing, mostly the runtime is \textit{Docker}\footnote{\url{https://www.docker.com}, accessed 2019-06-10}, but also alternatives that comply with the \textit{Kubernetes Container Runtime Interface}\footnote{\url{https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/}, accessed 2019-06-10} such as \textit{containerd}\footnote{\url{https://containerd.io}, accessed 2019-06-10} gain traction.
 
-As with the OS, also the container runtime should always be up-to-date and configured securely. It is essential not to forget about it in the stack and acknowledge that containers are not virtual machines and do not provide the same kind of isolation. A breach out of a container can, therefore, mean that not only a pod, but an entire node can be compromised.
+Besides the OS, also the container runtime should always be up-to-date and configured securely. It is essential not to forget about it in the stack and acknowledge that containers are not virtual machines and do not provide the same kind of isolation. A breach out of a container can, therefore, mean that not only a pod, but an entire node can be compromised.
 
 \paragraph{Network environment}
 
-Outside access to cluster resources should be as restricted as possible. In most configurations, access to functionality provided by the cluster is exposed only via Kubernetes Services. Hence it is not necessary for every node to be exposed publicly. The attack surface of the whole cluster can, therefore, be reduced by putting all nodes in a private network and exposing only the services via a load balancer.
+Outside access to cluster resources should be as restricted as possible. In most configurations, access to functionality provided by the cluster is exposed only via Kubernetes Services. Hence it is neither necessary nor recommended for every node to be exposed to the public internet. The attack surface of the whole cluster can, therefore, be reduced by putting all nodes in a private network and exposing only the services via a load balancer.
 
 \paragraph{Trusted Platform Modules}
 
@@ -56,7 +56,7 @@ When setting up and administering a Kubernetes cluster, there are many configura
 
 \subsection{Cluster installers}
 
-While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. While most installers come with sane default values, it is crucial to verify them and check what is done under the hood, as emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}. 
+While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. Even though most installers come with sane default configurations, it is crucial to verify them and check what is done under the hood, as emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}. 
 
 \subsection{API server}
 
@@ -76,7 +76,7 @@ This API needs to be adequately protected, as otherwise it can be misused as sho
 In order to enforce that only the API server can communicate with \mycode{etcd}, network policies, as later described in Section~\ref{ssec:networking}, should set up and an adequate certificate configuration\footnote{\url{https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/security.md}, accessed 2019-06-11} should be put in place.
 
 \paragraph{Encryption}
-By default, all data in \mycode{etcd} is stored in plain text. As it also stores all Secrets, sensitive information might be exposed, if the data on the volume used by \mycode{etcd} leaks. In order to mitigate that, encryption can and should be enabled by providing the API server with an encryption configuration using the startup parameter \mycode{--encryption-provider-config} as described in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/}, accessed 2019-06-11}. % TODO are secrets already explained, if so, link to them
+By default, all data in \mycode{etcd} is stored in plain text. As it also stores all secrets, sensitive information might be exposed, if the data on the volume used by \mycode{etcd} leaks. In order to mitigate that, encryption can and should be enabled by providing the API server with an encryption configuration using the startup parameter \mycode{--encryption-provider-config} as described in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/}, accessed 2019-06-11}. % TODO are secrets already explained, if so, link to them
 
 
 \subsection{Kubernetes Dashboard}
