@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: exa-frontend
+spec:
+  type: NodePort
+  selector:
+    app: exa-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
