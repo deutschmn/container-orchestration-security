@@ -1,7 +1,7 @@
 %% example text content
 %% scrartcl and scrreprt starts with section, subsection, subsubsection, ...
 %% scrbook starts with part (optional), chapter, section, ...
-\chapter{Kubernetes Cluster Security}
+\chapter{Kubernetes Cluster Security}\label{chap:clusterSecurity}
 
 In Kubernetes there are many aspects to consider when looking at it from a security perspective. With its flexibility also comes considerable complexity. In order to come by it and discuss it in a structured manner, we have created the model depicted in Figure~\ref{fig:secmodel}. It is aimed at giving a holistic view over all aspects that might influence the security of a Kubernetes cluster and uses structure ideas from~\textcite{securingkubernetes} and~\textcite{kubernetessecurity}.
 
@@ -68,7 +68,7 @@ A Kubelet is an agent running on every node that is responsible for running its 
 
 This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place. In the Kubernetes version 1.15, which is the most current one at the time of this writing, the insecure port is closed by default and the secure ones by default calls back to the API server to verify whether a request should be allowed. 
 
-\subsection{etcd}
+\subsection{etcd}\label{ssec:etcd}
 
 \mycode{etcd} is the central storage location in Kubernetes that stores all cluster data in a key-value data structure. The API server is the only component that is supposed to access it directly.
 
