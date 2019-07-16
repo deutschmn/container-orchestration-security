@@ -9,7 +9,7 @@ In this chapter, the security concepts introduced above are put into practice by
 
 \paragraph{Functionality}
 
-The example application is a simple dashboard for Kubernetes to view Pods in certain or all namespaces. It can also display ReplicaSets and scale them up by demand. A screenshot of it is depicted in Figure \ref{fig:exaScreenshot}.
+The example application is a simple dashboard for Kubernetes to view Pods in certain or all namespaces. It can also display and scale ReplicaSets. A screenshot of it is depicted in Figure \ref{fig:exaScreenshot}.
 
 \begin{figure}[H]
 \begin{center}
@@ -23,7 +23,7 @@ The example application is a simple dashboard for Kubernetes to view Pods in cer
 
 The application is written in Python and makes use of Flask\footnote{\url{http://flask.pocoo.org/}, accessed 2019-07-02} as well as the Kubernetes Python Client\footnote{\url{https://github.com/kubernetes-client/python}, accessed 2019-07-02}. 
 
-The setup consists of a backend \mycode{exa-backend} part and a frontend part \mycode{exa-frontend}. \mycode{exa-backend} provides a REST API with direct accesses to the Kubernetes API, while \mycode{exa-frontend} uses the backend for displaying the data. 
+The setup consists of a backend part, \mycode{exa-backend}, and a frontend part, \mycode{exa-frontend}. \mycode{exa-backend} provides a REST API and directly accesses the Kubernetes API, while \mycode{exa-frontend} uses the backend for retrieving the data. 
 
 \begin{figure}[H]
 \begin{center}
@@ -33,7 +33,7 @@ The setup consists of a backend \mycode{exa-backend} part and a frontend part \m
 \end{center}
 \end{figure}
 
-The Kubernetes cluster is set up using \ac{GKE} on \ac{GCP}\footnote{\url{https://cloud.google.com/kubernetes-engine/}, accessed 2019-07-02}. It is a sensible choice for cluster administrators who are not yet experts in the field of Kubernetes security, as it scales well from a very basic setup up to a large high-availability cluster.
+The Kubernetes cluster is run in \ac{GKE} on \ac{GCP}\footnote{\url{https://cloud.google.com/kubernetes-engine/}, accessed 2019-07-02}. It is a sensible choice for cluster administrators who are not yet experts in the field of Kubernetes security, as it scales well from a very basic setup up to a large high-availability cluster.
 
 The architecture of the cluster is depicted in Figure~\ref{fig:exaArchitecture}. The frontend and backend components run in separate pods. Users access the frontend via an ingress that maps to the frontend service. The frontend then retrieves all information by calling the backend service, which in turn makes the request to the Kubernetes API to perform the user's query.
 
@@ -61,7 +61,7 @@ As explained in Section~\ref{ssec:etcd}, it is vital to encrypt all secrets stor
 
 \paragraph{Dashboard}
 
-As the standard Kubernetes dashboard is deprecated and disabled by default on GKE, no further configuration was necessary to secure the setup. The \ac{GCP} Console\footnote{\url{https://console.cloud.google.com/}, accessed 2019-07-09}, which acts as a replacement for the standard dashboard on \ac{GKE}, again uses Google's \ac{IAM} and therefore needs no further protection. It is conceptually not accessible by unauthenticated users. 
+As the standard Kubernetes dashboard is deprecated and disabled by default on \ac{GKE}, no further configuration was necessary to secure the setup. The \ac{GCP} Console\footnote{\url{https://console.cloud.google.com/}, accessed 2019-07-09}, which acts as a replacement for the standard dashboard on \ac{GKE}, again uses Google's \ac{IAM} and therefore needs no additional protection. It is conceptually not accessible by unauthenticated users. 
 
 \subsection{Kubernetes Security Controls} \label{ssec:exaLayer3}
 
@@ -91,7 +91,7 @@ All objects (pods, service accounts, services, etc.) for the example application
 As the example application needs to access the Kubernetes API, access control for it needs to be set up.
 
 \subparagraph{Authentication}
-In our cluster configuration, Authentication is done using manually distributed X.509 certificates, as explained in Section~\ref{ssec:authentication}, which is viable as the cluster only has few users. We made this choice not out of any security considerations, so any other means of authentication could be used as well. 
+In our cluster configuration, authentication is done using manually distributed X.509 certificates, as explained in Section~\ref{ssec:authentication}, which is viable as the cluster only has few users. We made this choice not out of any security considerations, so any other means of authentication could be used as well. 
 
 The frontend application does not directly access the Kubernetes API and therefore does not need an identity in the cluster. It is consequently set up not to use a service account at all:
 
@@ -145,7 +145,7 @@ spec:
 This configuration causes the access tokens to be mounted into the container's file system in \mycode{/var/run/secrets/kubernetes.io/serviceaccount}\footnote{\url{https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/}, accessed 2019-07-16}. The backend application fetches them and uses them when performing requests to the API server.
 
 \subparagraph{Authorisation}
-For Authorisation, we are using \ac{RBAC} for all the reasons explained in~\ref{ssec:authorisation}. To equip the pod with the privileges it needs, we define a role that is bound to the pod resource:
+For authorisation, we used \ac{RBAC} for all the reasons explained in~\ref{ssec:authorisation}. To equip the pod with the privileges it needs, we defined a role that is bound to the pod resource:
 
 \begin{minted}[
     autogobble,
@@ -189,8 +189,8 @@ With this configuration, the backend pod has the privileges to \mycode{get}, \my
 
 \subparagraph{Admission Control}
 
-% TODO write about admission control -> add a ImageSecurityWebHookThingie?
-% or maybe only say the we cover one Admission Controller in the next thing
+In our cluster, we use the standard set of enabled admission controllers with the addition of the controller responsible for handling pod security policies, as further explained in the context of container security in Section \ref{ssec:exaLayer4}.
+
 
 \paragraph{Networking}
 
@@ -221,7 +221,7 @@ spec:
           access-exa: "true"
 \end{minted}
 
-As the pod configuration for the frontend contains the label \mycode{access-exa} set to \mycode{true}, it is allowed to the access the backend (see Appendix A).
+As the pod configuration for the frontend contains the label \mycode{access-exa} set to \mycode{true} (see Appendix A, Listing \ref{lst:frontendPod}), it is allowed to the access the backend, but no other pods or external resources are.
 
 \subsection{App and Container Security} \label{ssec:exaLayer4}
 
@@ -237,11 +237,11 @@ securityContext:
     runAsUser: 1000
 \end{minted}
 
-To enforce non-privileged containers as a general policy in the cluster, we applied a \mycode{PodSecurityPolicy} (see Appendix A), which also enables seccomp and AppArmor configurations, volume restrictions and a read-only file system. Our policy mainly builds upon the restricted example in the Kubernetes documentation.\footnote{\url{https://kubernetes.io/docs/concepts/policy/pod-security-policy/}, accessed 2019-07-16} 
+To enforce non-privileged containers as a general policy in the cluster, we applied a \mycode{PodSecurityPolicy} (see Appendix A, Listing \ref{lst:podSecurityPolicy}), which also enables seccomp and AppArmor configurations, volume restrictions and a read-only file system. Our policy mainly builds upon the restricted example in the Kubernetes documentation.\footnote{\url{https://kubernetes.io/docs/concepts/policy/pod-security-policy/}, accessed 2019-07-16} 
 
 To activate it, we bound it to a role, connected the role to all users and service accounts using a role binding and activated the corresponding admission controller in \ac{GKE}\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies}, accessed 2019-07-16}. 
 
-The \mycode{PodSecurityPolicy} applies whenever a pod attempted to be created or updated. Before the change is allowed to go through, it is checked whether it matches the criteria in the policy. If it does not, either container or container configuration fail with an error. 
+The \mycode{PodSecurityPolicy} applies whenever a pod is attempted to be created or updated. Before the change is allowed to go through, it is checked whether it fulfils the criteria in the policy. If it does not, either container creation or container configuration fail with an error. 
 
 %% vim:foldmethod=expr
 %% vim:fde=getline(v\:lnum)=~'^%%%%\ .\\+'?'>1'\:'='
