@@ -2,7 +2,7 @@
 
 This is a collection of all relevant configuration files applied to the Kubernetes cluster in which the example application runs.
 
-\section*{Frontend}
+\section*{Frontend Components}
 
 \begin{listing}[H]    
 	\caption{Configuration file for exa-frontend pod}    
@@ -15,7 +15,7 @@ This is a collection of all relevant configuration files applied to the Kubernet
 \end{listing}  
 
 
-\section*{Backend}
+\section*{Backend Components}
 
 \begin{listing}[H]    
 	\caption{Configuration file for the service account used by the backend application to access the Kubernetes API}  
@@ -30,10 +30,10 @@ This is a collection of all relevant configuration files applied to the Kubernet
 
 \begin{listing}[H]    
 	\caption{Configuration file for exa-backend service that routes to the exa-backend pod} 
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-service}
+	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-service.yaml}
 \end{listing}  
 
-\subsection*{RBAC}
+\section*{RBAC}
 
 \begin{listing}[H]    
 	\caption{Configuration file to define a cluster role that allows reading access to pods}  
@@ -57,9 +57,15 @@ This is a collection of all relevant configuration files applied to the Kubernet
 	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrolebinding_rs-admin-exa-backend-sa.yaml}
 \end{listing}  
 
-\subsection*{Networking}
+\section*{Networking}
 
 \begin{listing}[H]    
 	\caption{Configuration file that restricts network communication as explained in Section \ref{ssec:networking}}
 	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-networkpolicy.yaml}
 \end{listing}  
+
+\section*{Pod Security Policy}
+
+
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-psp.yaml}
+\captionof{listing}{Configuration file that enforces a \mycode{PodSecurityPolicy} admission controller as explained in Section \ref{ssec:admissionControl}.}

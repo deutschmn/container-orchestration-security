@@ -1,0 +1,14 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: exa-role-restricted-psp
+  namespace: default # TODO change to admin
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - exa-psp-restricted
+  verbs:
+  - use

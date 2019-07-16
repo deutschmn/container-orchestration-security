@@ -19,4 +19,7 @@ spec:
           value: "exa-backend" # the backend service
         - name: BACKEND_PORT
           value: "80" # the port on which the backend listens on the service
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 1000
   automountServiceAccountToken: false # no service account needed

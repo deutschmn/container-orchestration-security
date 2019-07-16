@@ -17,4 +17,7 @@ spec:
           value: "1"
         - name: LOCAL_CLUSTER
           value: "0"
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 1000
   serviceAccountName: exa-backend-sa

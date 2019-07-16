@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: exa-backend-rs
+spec:
+  # modify replicas according to your case
+  replicas: 3
+  selector:
+    matchLabels:
+      app: exa-backend
+  template:
+    metadata:
+      labels:
+        app: exa-backend
+    spec:
+      securityContext:
+        runAsUser: 1000
+      containers:
+        - image: docker.io/deutschmann/exa-backend
+          name: exa-backend
+          ports:
+            - containerPort: 5000
+              name: http
+              protocol: TCP
+          env:
+            - name: FLASK_DEBUG
+              value: "1"
+            - name: LOCAL_CLUSTER
+              value: "0"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 1000
