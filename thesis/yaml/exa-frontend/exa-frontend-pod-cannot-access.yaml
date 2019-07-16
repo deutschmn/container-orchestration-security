@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: exa-frontend-p-no-access
+  #labels:
+    #access-exa: "true" # -> without this label, access will fail
+spec:
+  containers:
+    - image: docker.io/deutschmann/exa-frontend
+      name: exa-frontend
+      ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+      env:
+        - name: FLASK_DEBUG
+          value: "1"
+        - name: BACKEND_NAME
+          value: "exa-backend" # the backend service
+        - name: BACKEND_PORT
+          value: "80" # the port on which the backend listens on the service
+  automountServiceAccountToken: false # no service account needed

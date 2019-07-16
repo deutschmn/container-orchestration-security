@@ -175,9 +175,11 @@
 
 %% ... it's OK to put here your own usepackage commands ...
 
+\usepackage{floatrow}
 \usepackage[outputdir=.texpadtmp]{minted}
 
 \usepackage[printonlyused]{acronym}
+
 
 %% ========================================================================
 %%%% MISC self-defined commands and settings
@@ -268,6 +270,7 @@
 \appendix                       %% closes main document, appendix follows until end; only available in book-classes
 \addpart*{Appendix}             %% adding Appendix to tableofcontents
 
+\input{config_appendix}
 \input{acros} %% here live the acronyms
 
 \printbibliography              %% remove, if using BibTeX instead of biblatex

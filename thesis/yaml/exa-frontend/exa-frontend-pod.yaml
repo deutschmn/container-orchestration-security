@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: exa-frontend-p
+  labels:
+    # to allow network access to exa-backend
+    # (enforced by network policy)
+    access-exa: "true"
+spec:
+  containers:
+    - image: docker.io/deutschmann/exa-frontend
+      name: exa-frontend
+      ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+      env:
+        # read by the application at runtime
+        - name: FLASK_DEBUG
+          value: "1"
+        - name: BACKEND_NAME
+          value: "exa-backend" # backend service name
+        - name: BACKEND_PORT
+          value: "80" # backend service port
+  automountServiceAccountToken: false # SA disabled

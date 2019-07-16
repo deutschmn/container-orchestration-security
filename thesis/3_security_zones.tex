@@ -206,12 +206,7 @@ As for all security configurations, the principle of Least Privilege applies esp
 
 Applied to Kubernetes API access control, this means that an application which does not need to access the Kubernetes API to function, as is likely the case for the vast majority of applications, should not be allowed to do so. As pointed out by \textcite{kubernetessecurity}, it is therefore recommended to disable the auto-mounting of the default Service Account into pods by setting \mycode{automountServiceAccountToken: false} in the pod specification. 
 
-
-
-Section \ref{sec:???}. shows another practical example of an \ac{RBAC} configuration that adheres to this principle.
-
-% TODO ref to section where this is done
-
+Section \ref{ssec:exaLayer3}. shows another practical example of an \ac{RBAC} configuration that adheres to this principle.
 
 \subsubsection{Admission Control} \label{ssec:admissionControl}
 
@@ -263,7 +258,7 @@ The \mycode{policyTypes} specify whether egress traffic, ingress traffic or both
 
 In most cases, it makes sense to prohibit egress by default. In this case, even if a pod is entirely hijacked, it cannot directly communicate with the outside world via a reverse shell (connect-back shell). Of course, however, such a restriction could be bypassed by using a bind shell that listens on a specific port for an incoming connection from the attacker as explained in~\textcite{bindAndReverseShells}. Still, such an approach would require more effort from the attacker.
 
-An example of how Network Policies can be used to secure a real-world cluster is given in Section \ref{sec:???}. % TODO ref to relevant section once its written
+An example of how Network Policies can be used to secure a real-world cluster is given in Section \ref{ssec:exaLayer3}.
 
 \section{App and Container Security} \label{sec:layer4}
 

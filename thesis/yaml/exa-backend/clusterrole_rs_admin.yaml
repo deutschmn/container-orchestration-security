@@ -1,0 +1,8 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rs-admin
+rules:
+- apiGroups: ["extensions", "apps"] # "" = core API group
+  resources: ["replicasets"]
+  verbs: ["get", "watch", "list", "scale"]

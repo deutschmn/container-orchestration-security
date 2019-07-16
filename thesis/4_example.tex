@@ -49,9 +49,11 @@ However, as all cluster components are running within the \ac{GCP} environment, 
 
 \subsection{Kubernetes Infrastructure Security}
 
+When it comes to Kubernetes' infrastructure components, most relevant security aspects are still closely tied to the underlying base infrastructure, in this case, \ac{GKE}.
+
 \paragraph{API Server}
 
-When it comes to the security of Kubernetes infrastructure, namely the API server, the aforementioned \ac{IAM} can also cause potential weaknesses, if not correctly configured. When it is used as the means for authorisation, by default, log in using username and password is allowed. We disabled it in the cluster configuration in the \ac{GCP} web interface and only used certificates, which we regularly rotate\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/credential-rotation}, accessed 2019-07-09}, to authenticate within the cluster.
+The aforementioned \ac{IAM}, by default, allows login using username and password. We disabled it in the cluster configuration in the \ac{GCP} web interface and only used certificates, which we regularly rotate\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/credential-rotation}, accessed 2019-07-09}, to authenticate within the cluster.
 
 \paragraph{Secret Encryption}
 
@@ -61,8 +63,165 @@ As explained in Section~\ref{ssec:etcd}, it is vital to encrypt all secrets stor
 
 As the standard Kubernetes dashboard is deprecated and disabled by default on GKE, no further configuration was necessary to secure the setup. The \ac{GCP} Console\footnote{\url{https://console.cloud.google.com/}, accessed 2019-07-09}, which acts as a replacement for the standard dashboard on \ac{GKE}, again uses Google's \ac{IAM} and therefore needs no further protection. It is conceptually not accessible by unauthenticated users. 
 
-\subsection{Kubernetes Security Controls}
-% TODO write
+\subsection{Kubernetes Security Controls} \label{ssec:exaLayer3}
+
+We have put the following Kubernetes security controls in place to secure our cluster configuration.
+
+\paragraph{Namespaces}
+
+The example application is set up to run in its own namespace \mycode{admin} to be isolated from other components running in the cluster. The namespace is created by applying a YAML file like this:
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: admin
+  labels:
+    name: admin
+\end{minted}
+
+All objects (pods, service accounts, services, etc.) for the example application are created in this namespace by running \mycode{kubectl apply -f <yaml-file> --namespace=admin}.
+
+\paragraph{API Access Control}
+
+As the example application needs to access the Kubernetes API, access control for it needs to be set up.
+
+\subparagraph{Authentication}
+In our cluster configuration, Authentication is done using manually distributed X.509 certificates, as explained in Section~\ref{ssec:authentication}, which is viable as the cluster only has few users. We made this choice not out of any security considerations, so any other means of authentication could be used as well. 
+
+The frontend application does not directly access the Kubernetes API and therefore does not need an identity in the cluster. It is consequently set up not to use a service account at all:
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: exa-frontend-p
+  # ...
+spec:
+  # ...
+  automountServiceAccountToken: false
+\end{minted}
+
+As anonymous API access is disabled by default, the pod \mycode{exa-frontend-p} now has no access to the API directly, even if an attacker gains control over the whole pod.
+
+In contrast, the backend needs to access the Kubernetes API, which is why we created an identity, a service account called \mycode{exa-backend-sa}, for it:
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: exa-backend-sa
+\end{minted}
+
+and assigned it to its pod:
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: exa-backend-p
+  # ...
+spec:
+  # ...
+  serviceAccountName: exa-backend-sa
+\end{minted}
+
+This configuration causes the access tokens to be mounted into the container's file system in \mycode{/var/run/secrets/kubernetes.io/serviceaccount}\footnote{\url{https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/}, accessed 2019-07-16}. The backend application fetches them and uses them when performing requests to the API server.
+
+\subparagraph{Authorisation}
+For Authorisation, we are using \ac{RBAC} for all the reasons explained in~\ref{ssec:authorisation}. To equip the pod with the privileges it needs, we define a role that is bound to the pod resource:
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: admin
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" = core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+\end{minted}
+
+To create the link between the role and the service account of the backend pod, a \mycode{RoleBinding} is set up: 
+
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: exa-backend-read-pods
+  namespace: admin
+subjects:
+- kind: ServiceAccount
+  name: exa-backend-sa 
+  namespace: admin
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+\end{minted}
+
+With this configuration, the backend pod has the privileges to \mycode{get}, \mycode{watch} and \mycode{list} all pods in the namespace \mycode{admin}. To grant these privileges for all namespaces, instead of a \mycode{Role}, a \mycode{ClusterRole} and instead of a \mycode{RoleBinding}, a \mycode{ClusterRoleBinding} needs to be created. The full \ac{RBAC} configuration for our cluster can be found in Appendix A.
+
+\subparagraph{Admission Control}
+
+% TODO write about admission control -> add a ImageSecurityWebHookThingie?
+% or maybe only say the we cover one Admission Controller in the next thing
+
+\paragraph{Networking}
+
+In the example application's setup, the pod \mycode{exa-backend-p} never needs to be accessed directly from outside the cluster. Specifically, it only ever needs to be accessed from the pod \mycode{exa-frontend-p}. To lock down network traffic to these requirements, we enabled network policies, as explained in Section~\ref{ssec:networking}. 
+
+Therefore, we enabled network policies in the \ac{GKE} cluster\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy}, accessed 2019-07-14} and applied the following policy:
+
+% TODO maybe update this to include a policy that allows only Egress to API server
+\begin{minted}[
+    autogobble,
+    frame=single,
+    linenos
+  ]{yaml}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: exa-backend-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: exa-backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          access-exa: "true"
+\end{minted}
+
+As the pod configuration for the frontend contains the label \mycode{access-exa} set to \mycode{true}, it is allowed to the access the backend (see Appendix A).
 
 \subsection{App and Container Security}
 % TODO write

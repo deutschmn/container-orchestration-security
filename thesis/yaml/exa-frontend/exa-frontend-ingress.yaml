@@ -1,0 +1,10 @@
+---
+apiVersion: "extensions/v1beta1"
+kind: "Ingress"
+metadata:
+  name: "exa-frontend"
+  namespace: "default"
+spec:
+  backend:
+    serviceName: "exa-frontend"
+    servicePort: 80
