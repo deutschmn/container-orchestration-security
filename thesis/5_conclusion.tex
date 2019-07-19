@@ -3,7 +3,11 @@
 %% scrbook starts with part (optional), chapter, section, ...
 \chapter{Conclusion} \label{chap:conclusion}
 
-% TODO Write conclusion
+Kubernetes is a flexible, state-of-the-art system for container orchestration in the modern age, that also brings a lot of complexity. In this thesis, we have taken a holistic view of the relevant security aspects of container orchestration in Kubernetes and categorised them into a layer model. We demonstrated, how an example application can be run securely in a Kubernetes cluster on \acf{GKE} and which configurations are necessary to ensure that. 
+
+Our research demonstrated that Kubernetes and its installers mostly already come with secure default setups. However, many configurations cannot be given by default, as cluster installers cannot anticipate the logic and premises of the applications run in real-world clusters. Consequently, aspects such as  custom \ac{RBAC} configurations, network policies and pod security policies always need to be manually configured by an experienced cluster administrator. 
+
+While the technical details of how container orchestration security is approached will likely change in future, the underlying concepts will remain. Even ever-improving default setups cannot entirely replace a holistic view of the cluster paired with necessary custom security configurations.
 
 %% vim:foldmethod=expr
 %% vim:fde=getline(v\:lnum)=~'^%%%%\ .\\+'?'>1'\:'='
