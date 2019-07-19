@@ -179,7 +179,7 @@
 \usepackage[outputdir=.texpadtmp]{minted}
 
 \usepackage[printonlyused]{acronym}
-
+\usepackage{geometry}
 
 %% ========================================================================
 %%%% MISC self-defined commands and settings
@@ -237,7 +237,10 @@
 %% include the abstract without chapter number but include it on table of contents:
 \cleardoublepage
 \addcontentsline{toc}{chapter}{Abstract}
-\include{abstract}              %% Abstract
+
+\newgeometry{textwidth=11cm,textheight=20cm}
+\include{abstract}	%% Abstract
+\restoregeometry
 
 \setcounter{tocdepth}{1}
 \tableofcontents                %% this produces the table of contents - you might have guessed :-)
