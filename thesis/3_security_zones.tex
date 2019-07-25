@@ -52,21 +52,27 @@ Outside access to cluster resources should be as restricted as possible. In most
 
 \section{Kubernetes Infrastructure Security} \label{sec:layer2}
 
-When setting up and administering a Kubernetes cluster, there are many configurations that, at first sight, do not appear to be critical to security. Still, the following aspects, which mostly are related to control plane components, must not be neglected to ensure a secure cluster setup. Many best practice guidelines are listed in~\textcite{kubernetessecurity}.
+The security of Kubernetes infrastructure concerns the configuration of all components of the Kubernetes control plane and their internal communications. When setting up and administering a cluster, there are many configurations that, at first sight, do not appear to be critical to security. Still, the following aspects must not be neglected to ensure a secure cluster setup. Many best practice guidelines are listed in~\textcite{kubernetessecurity}.
 
 \subsection{Cluster installers}
 
-While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. Even though most installers come with sane default configurations, it is crucial to verify them and check what is done under the hood, as emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}. 
+While it is possible to set up a cluster completely manually\footnote{\url{https://github.com/kelseyhightower/kubernetes-the-hard-way}, accessed 2019-06-11}, most are set up using cluster installers such as \mycode{kubeadm}\footnote{\url{https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/}, accessed 2019-06-11} or \mycode{kops}\footnote{\url{https://github.com/kubernetes/kops}, accessed 2019-06-11}. They can be used to bootstrap all control plane components, set up the \ac{PKI} and network configuration, and join worker nodes to the cluster.
+
+Even though most installers come with sane default configurations, it is crucial to verify them and check what is done under the hood, as emphasised by~\textcite{securingkubernetesConfK8SClusterComponents}. 
 
 \subsection{API server}
 
-The API server is an essential control plane component, as an attacker that gains control over it has the equivalent of root access to the whole cluster, as described by~\cite{kubernetessecurity}. The critical aspect of how the API itself is secured and how the API server fulfils its role as the cluster's \ac{CA} is described in Section \ref{sec:apiAccessControl}, as this resembles a Kubernetes security control and is therefore grouped in the corresponding layer of our model. Still, any misconfiguration of the API server might mean leaving the front door to the cluster open, which is why its configuration should always be reviewed from a security perspective.
+The API server is an essential control plane component, as an attacker that gains control over it has the equivalent of root access to the whole cluster, as described by~\cite{kubernetessecurity}. The critical aspect of how the API itself is secured and how the API server fulfils its role as the cluster's \ac{CA} is described in Section \ref{sec:apiAccessControl}, as this resembles a Kubernetes security control and is therefore grouped in the corresponding layer of our model. 
+
+Still, any misconfiguration of the API server might mean leaving the front door to the cluster open, which is why its configuration should always be reviewed from a security perspective. This includes the fact that the Kubernetes API should generally not be exposed to the public internet if there is no pressing need.
 
 \subsection{Kubelets}
 
-A Kubelet is an agent running on every node that is responsible for running its pods, reporting metrics and similar. It receives its commands from the control plane and for that provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control plane. 
+A Kubelet is an agent running on every node that is responsible for running its containers, reporting metrics and similar. It receives its commands from the control plane. For that, it provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control plane. 
 
-This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place. In the Kubernetes version 1.15, which is the most current one at the time of this writing, the insecure port is closed by default and the secure ones by default calls back to the API server to verify whether a request should be allowed. 
+This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. In the Kubernetes version 1.15, which is the most current one at the time of this writing, the API is protected by default. The insecure port is closed and the secure ones calls back to the API server to verify whether a request should be allowed (see \textit{Node Authorisation} in Section \ref{ssec:authorisation}). 
+
+It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place.
 
 \subsection{etcd}\label{ssec:etcd}
 
@@ -81,7 +87,7 @@ By default, all data in \mycode{etcd} is stored in plain text. As it also stores
 
 \subsection{Kubernetes Dashboard}
 
-As the recent incident at Tesla, described in~\textcite{teslaLeak}, illustrates, leaving the Dashboard exposed to the public internet or leaving it configured insecurely can compromise the security of an entire cluster. Therefore~\textcite{kubernetessecurity} suggest to follow these guidelines to secure it:
+The Dashboard\footnote{\url{https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/}, accessed 2019-07-19} is a Web UI for administrating a Kubernetes cluster and gives a convenient overview over the pods, deployments, services and other objects currently deployed. However, as the recent incident at Tesla, described in~\textcite{teslaLeak}, illustrates, leaving the Dashboard exposed to the public internet or leaving it configured insecurely can compromise the security of an entire cluster. Therefore~\textcite{kubernetessecurity} suggest to follow these guidelines to secure it:
 
 \begin{itemize}
     \item Only authenticated users should be allowed access.
@@ -264,7 +270,7 @@ The top-most layer of the model concerns the applications that run in the Kubern
 
 \subsection{Application Security}
 
-The largest attack surface on this layer naturally are the applications themselves. As the whole class of application vulnerabilities cannot be mitigated entirely, Kubernetes provides many damage control tools on lower levels that limit an attacker's possibilities, even when an application has been compromised.
+The largest attack surface on this layer naturally are the applications themselves. As the whole class of application vulnerabilities cannot be mitigated entirely, Kubernetes provides many damage control tools on lower levels that limit an attacker's possibilities, even when an application has been compromised. This is a good practice example of defence in depth, as explained in~\textcite{defenceInDepth}.
 
 \paragraph{Image Scanning} 
 
@@ -288,7 +294,7 @@ runAsUser:
   rule: 'MustRunAsNonRoot'
 \end{minted}
 
-One side effect of not running as root is that applications can not bind to well-known ports ($<= 1024$), but this can be easily mitigated by using the port binding capabilities of the container runtime.
+One side effect of not running as root is that applications can not bind to well-known ports ($< 1024$), but this can be easily mitigated by using the port binding capabilities of the container runtime.
 
 \paragraph{Minimal containers}
 
@@ -296,7 +302,7 @@ Containers should only run the bare minimum of applications they require to fulf
 
 \paragraph{Secrets and Configuration}
 
-Secrets and configuration items should not be baked into the container images, but should instead be managed using the Kubernetes objects \mycode{Secret} and \mycode{ConfigMap} respectively. By doing so, they can be more easily adapted and are not prone to leak when a container image leaks.
+Secrets and configuration items should not be baked into the container images, but should instead be managed using the Kubernetes objects \mycode{Secret} and \mycode{ConfigMap} respectively. These can then either be exposed to the containers using environment variables or by mounting them to a volume accessible to the container. By doing so, they can be more easily adapted and are not prone to leak when a container image leaks.
 
 \paragraph{Rule-based Execution}
 

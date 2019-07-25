@@ -7,21 +7,21 @@
 
 % Structure of introduction inspired by https://academia.stackexchange.com/questions/3501/whats-the-point-in-the-paper-is-structured-as-follows
 
-With the advent of microservices and distributed environments, containerisation has gained a lot of traction. The most common engine today being Docker, many modern web applications are containerised and run in Docker containers, instead of running in manually managed virtual machines environments. 
+With the advent of microservices and distributed environments, containerisation has gained a lot of traction. The most common engine today being Docker\footnote{\url{https://www.docker.com}, accessed 2019-07-25}, many modern web applications run in Docker containers, instead of running in manually managed virtual machines environments. 
 
-To run distributed applications and services at large scale and with high availability, there is widespread demand for container orchestration systems to take care of administrative tasks such as scaling on-demand, continuous deployment and healing. The most widely used implementation for container orchestration today is Kubernetes, which has its origins in Google’s Borg project\footnote{\url{https://kubernetes.io/blog/2015/04/borg-predecessor-to-kubernetes/}, accessed 2019-07-18}. It is an open-source system to manage deployment and management of container applications, whereas the container runtime can, but does not have to be, Docker. The version considered in this theses is the currently most up-to-date v1.15.
+To run distributed applications and services at large scale and with high availability, there is widespread demand for container orchestration systems to take care of administrative tasks such as scaling on-demand, continuous deployment and healing. The most widely used implementation for container orchestration today is Kubernetes\footnote{\url{https://kubernetes.io}, accessed 2019-07-25}, which has its origins in Google’s Borg project\footnote{\url{https://kubernetes.io/blog/2015/04/borg-predecessor-to-kubernetes/}, accessed 2019-07-18}. It is an open-source system to manage deployment and management of container applications, whereas the container runtime can be Docker, containerd\footnote{\url{https://containerd.io}, accessed 2019-07-25}, cri-o\footnote{\url{https://cri-o.io}, accessed 2019-07-25} or similar. The Kubernetes version considered in this thesis is the currently most up-to-date v1.15.
 
-Kubernetes is a very flexible and powerful system that, therefore, also comes with a lot of complexity. This thesis aims to consider it from a security perspective and look into the different aspects relevant for a secure cluster configuration. Background information and other work that has been done in the field is explained in Chapter \ref{cha:background}.
+Kubernetes is a very flexible and powerful system that, therefore, also comes with a lot of complexity. This thesis aims to consider it from a security perspective and look into the different aspects relevant for a secure cluster configuration. Background information and preliminaries are explained in Chapter \ref{cha:background}.
 
-We propose a layer model in Chapter \ref{chap:clusterSecurity} to structure security aspects related to Kubernetes clusters. It spans from the surrounding infrastructure in \textit{Base Infrastructure Security} (Section \ref{sec:layer1}) and \textit{Kubernetes Infrastructure Security} (Section \ref{sec:layer2}) over \textit{Kubernetes Security Controls} (Section \ref{sec:layer3}) to finally regard \textit{App and Container Security} (Section \ref{sec:layer4}). Besides providing a holistic view, it also gives examples on how defence in depth, as introduced in~\textcite{defenceInDepth}, can be applied to perform damage control, if one or more security barriers are breached.
+We propose a layer model in Chapter \ref{chap:clusterSecurity} to structure security aspects related to Kubernetes clusters. It spans from the underlying infrastructure in \textit{Base Infrastructure Security} (Section \ref{sec:layer1}) and \textit{Kubernetes Infrastructure Security} (Section \ref{sec:layer2}) over \textit{Kubernetes Security Controls} (Section \ref{sec:layer3}) to finally regard \textit{App and Container Security} (Section \ref{sec:layer4}). Besides providing a holistic view, it also gives examples on how defence in depth, as introduced by~\textcite{defenceInDepth}, can be applied to perform damage control, if one or more security barriers are breached.
 
 In Chapter \ref{chap:example}, we then use this model to examine how the security of an example application, a simple web dashboard for Kubernetes, can be securely set up to run in a cluster. 
 
 Our main contributions, as concluded in Chapter \ref{chap:conclusion}:
 
 \begin{itemize}
-	\item We created a structured layer model to give a holistic view of all security aspects of a Kubernetes cluster.
-	\item In the context of the model, we showed which configuration setups make sense and are viable with respect to real-world applications.
+	\item We created a structured layer model to give a holistic view of all security aspects of Kubernetes clusters.
+	\item In the context of the model, we showed which configuration setups are necessary and should be taken with respect to real-world applications.
 	\item Using an example application, we demonstrated how defence in depth could be applied to a Kubernetes cluster.
 \end{itemize}
 
