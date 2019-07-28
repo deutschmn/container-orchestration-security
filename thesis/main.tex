@@ -57,6 +57,7 @@
 %% See babel documentation for further details.
 
 %% BibLaTeX-settings: (see biblatex reference for further description)
+
 \newcommand{\mybiblatexstyle}{numeric}
 %% e.g., "alphabetic", "authoryear", ...
 %% The biblatex style which is being used for referencing. See
@@ -179,6 +180,12 @@
 
 \usepackage[printonlyused]{acronym}
 \usepackage{geometry}
+
+\DefineBibliographyStrings{english}{%
+  urlseen = {accessed on},
+}
+
+\usepackage{breakurl}
 
 %% ========================================================================
 %%%% MISC self-defined commands and settings

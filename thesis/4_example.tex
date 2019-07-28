@@ -3,7 +3,7 @@
 %% scrbook starts with part (optional), chapter, section, ...
 \chapter{Securing an Example Application} \label{chap:example}
 
-In this chapter, the security concepts introduced above are put into practice by applying them to a real-world application. This application has been created solely for demonstration purposes to resemble a use case that makes extensive use of Kubernetes' features while still retaining simplicity to be generally applicable and easy to understand. The full configuration files of the application can be found in Appendix A.
+In this chapter, the security concepts introduced above are put into practice by applying them to a real-world application. This application has been created solely for demonstration purposes to resemble a use case that makes extensive use of Kubernetes' features while still retaining simplicity to be generally applicable and easy to understand. The full configuration files of the application can be found in Appendix \hyperref[apx:A]{A}.
 
 \section{Example Application}
 
@@ -45,9 +45,10 @@ In this section, the measures that were taken to secure the setup are explained.
 
 \subsection{Base Infrastructure Security}
 
+% TODO should ref to Google be a footnote or a real citation?
 As this setup uses \ac{GKE} as an infrastructure provider, most considerations for base infrastructure security are already taken care of by Google\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/concepts/security-overview}, accessed 2019-07-09}. By default, \ac{GKE} clusters run the newest version of Google's Container-Optimized OS\footnote{\url{https://cloud.google.com/container-optimized-os/docs/concepts/features-and-benefits}, accessed 2019-07-09} that comes with a current version of the container runtime as well. 
 
-However, as all cluster components are running within the \ac{GCP} environment, they are also subject to Google's Cloud \ac{IAM}\footnote{\url{https://cloud.google.com/iam/}, accessed 2019-07-09}. It works alongside Kubernetes \ac{RBAC}, yet requires some special attention when applications within the Kubernetes cluster access other resources on \ac{GCP} outside of the cluster.\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/iam}, accessed 2019-07-09}
+However, as all cluster components are running within the \ac{GCP} environment, they are also subject to Google's Cloud \ac{IAM}\footnote{\url{https://cloud.google.com/iam/}, accessed 2019-07-09}. It works alongside Kubernetes \ac{RBAC}, yet requires some special attention when applications within the Kubernetes cluster access other resources on \ac{GCP} outside of the cluster\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/iam}, accessed 2019-07-09}.
 
 \subsection{Kubernetes Infrastructure Security}
 
@@ -59,7 +60,7 @@ The aforementioned \ac{IAM}, by default, allows login using username and passwor
 
 \paragraph{Secret Encryption}
 
-As explained in Section~\ref{ssec:etcd}, it is vital to encrypt all secrets stored in \mycode{etcd}. \ac{GKE} already provides encryption at rest by default\footnote{\url{https://cloud.google.com/security/encryption-at-rest/default-encryption/}, accessed 2019-07-09}, in case an attacker gains access to an offline copy of the \mycode{etcd} database. However, to protect against the case that an attacker gains online access to the machine that runs \mycode{etcd}, we also configure application-layer encryption. To set it up, we generate a key, store it in Google's Cloud Key Management Service (KMS)\footnote{\url{https://cloud.google.com/kms/docs/}, accessed 2019-07-09} and hand it to the cluster configuration using \mycode{--database-encryption-key}\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets}, accessed 2019-07-09}.  
+As explained in Section~\ref{ssec:etcd}, it is vital to encrypt all secrets stored in \mycode{etcd}. \ac{GKE} already provides encryption at rest by default\footnote{\url{https://cloud.google.com/security/encryption-at-rest/default-encryption/}, accessed 2019-07-09}, in case an attacker gains access to an offline copy of the \mycode{etcd} database. However, to protect against the case that an attacker gains online access to the machine that runs \mycode{etcd}, we also configure application-layer encryption. To set it up, we generate a key, store it in Google's Cloud \ac{KMS}\footnote{\url{https://cloud.google.com/kms/docs/}, accessed 2019-07-09} and hand it to the cluster configuration using the command line option \mycode{--database-encryption-key}\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets}, accessed 2019-07-09}.  
 
 \paragraph{Dashboard}
 
@@ -114,7 +115,7 @@ spec:
 
 As anonymous API access is disabled by default, the pod \mycode{exa-frontend-p} now has no access to the API directly, even if an attacker gains control over the whole pod.
 
-In contrast, the backend needs to access the Kubernetes API, which is why we create an identity, a service account called \mycode{exa-backend-sa}, for it:
+In contrast, the backend needs to access the Kubernetes API, which is why we create an identity, a service account called \mycode{exa-backend-sa}, for it using this configuration file:
 
 \begin{minted}[
     autogobble,
@@ -127,7 +128,7 @@ metadata:
   name: exa-backend-sa
 \end{minted}
 
-and assign it to its pod:
+We then assign the service account to its pod by adapting the pod's configuration accordingly:
 
 \begin{minted}[
     autogobble,
@@ -187,7 +188,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 \end{minted}
 
-With this configuration, the backend pod has the privileges to \mycode{get}, \mycode{watch} and \mycode{list} all pods in the namespace \mycode{admin}. To grant these privileges for all namespaces, instead of a \mycode{Role}, a \mycode{ClusterRole} and instead of a \mycode{RoleBinding}, a \mycode{ClusterRoleBinding} needs to be created. The full \ac{RBAC} configuration for our cluster can be found in Appendix A.
+With this configuration, the backend pod has the privileges to \mycode{get}, \mycode{watch} and \mycode{list} all pods in the namespace \mycode{admin}. To grant these privileges for all namespaces, instead of a \mycode{Role}, a \mycode{ClusterRole} and instead of a \mycode{RoleBinding}, a \mycode{ClusterRoleBinding} needs to be created. The full \ac{RBAC} configuration for our cluster can be found in Appendix \hyperref[apx:A]{A}.
 
 \subparagraph{Admission Control}
 
@@ -196,7 +197,7 @@ In our cluster, we use the standard set of enabled admission controllers with th
 
 \paragraph{Networking}
 
-In the example application's setup, the pod \mycode{exa-backend-p} never needs to be accessed directly from outside the cluster. Specifically, it only ever needs to be accessed from the pod \mycode{exa-frontend-p}. To lock down network traffic to these requirements, we make use of network policies, as explained in Section~\ref{ssec:networking}. 
+In the example application's setup, the pod \mycode{exa-backend-p} never needs to be accessed directly from outside the cluster. Specifically, \mycode{exa-frontend-p} is the only pod that ever needs to access it. To lock down network traffic to these requirements, we make use of network policies, as explained in Section~\ref{ssec:networking}. 
 
 To do so, we enable network policies in the \ac{GKE} cluster\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy}, accessed 2019-07-14} and apply the following policy:
 
@@ -223,7 +224,7 @@ spec:
           access-exa: "true"
 \end{minted}
 
-As the pod configuration for the frontend contains the label \mycode{access-exa} set to \mycode{true} (see Appendix A, Listing \ref{lst:frontendPod}), it is allowed to the access the backend, but no other pods or external resources are.
+As the pod configuration for the frontend contains the label \mycode{access-exa} set to \mycode{true} (see Appendix \hyperref[apx:A]{A}, Listing \ref{lst:frontendPod}), it is allowed to the access the backend, but no other pods or external resources are.
 
 \subsection{App and Container Security} \label{ssec:exaLayer4}
 
@@ -239,7 +240,7 @@ securityContext:
     runAsUser: 1000
 \end{minted}
 
-To enforce non-privileged containers as a general policy in the cluster, we apply a \mycode{PodSecurityPolicy} (see Appendix A, Listing \ref{lst:podSecurityPolicy}), which also enables seccomp and AppArmor configurations, volume restrictions and a read-only file system. Our policy mainly builds upon the restricted example in the Kubernetes documentation.\footnote{\url{https://kubernetes.io/docs/concepts/policy/pod-security-policy/}, accessed 2019-07-16} 
+To enforce non-privileged containers as a general policy in the cluster, we apply a \mycode{PodSecurityPolicy} (see Appendix \hyperref[apx:A]{A}, Listing \ref{lst:podSecurityPolicy}), which also enables seccomp and AppArmor configurations, volume restrictions and a read-only file system. Our policy mainly builds upon the restricted example in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/policy/pod-security-policy/}, accessed 2019-07-16}.
 
 To activate it, we bind it to a role, connect the role to all users and service accounts using a role binding and activate the responsible admission controller in \ac{GKE}\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies}, accessed 2019-07-16}. 
 

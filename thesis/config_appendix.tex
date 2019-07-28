@@ -2,74 +2,50 @@
 
 This is a collection of all relevant Kubernetes configuration files applied to the cluster in which the example application runs.
 
+
 \section*{Frontend Components}
 
-\begin{listing}[H]    
-	\caption{Configuration file for exa-frontend pod}    
-    \inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-frontend/exa-frontend-pod.yaml}
-    \label{lst:frontendPod}
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-frontend/exa-frontend-pod.yaml}
+\captionof{listing}{Configuration file for exa-frontend pod \label{lst:frontendPod}}
 
-\begin{listing}[H]    
-	\caption{Configuration file for exa-frontend service that routes to the exa-frontend pod}  
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-frontend/exa-frontend-service.yaml}
-    \label{lst:frontendService}
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-frontend/exa-frontend-service.yaml}
+\captionof{listing}{Configuration file for exa-frontend service that routes to the exa-frontend pod \label{lst:frontendService}}
 
 
 \section*{Backend Components}
 
-\begin{listing}[H]    
-	\caption{Configuration file for the service account used by the backend application to access the Kubernetes API}  
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-sa.yaml}
-	\label{lst:exa-backend-sa}  
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-sa.yaml}
+\captionof{listing}{Configuration file for the service account used by the backend application to access the Kubernetes API \label{lst:exa-backend-sa}}  
+	
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-pod.yaml}
+\captionof{listing}{Configuration file for exa-backend pod \label{lst:backendPod}}  
+	 
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-service.yaml}
+\captionof{listing}{Configuration file for exa-backend service that routes to the exa-backend pod \label{lst:backendService}}
 
-\begin{listing}[H]    
-	\caption{Configuration file for exa-backend pod}  
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-pod.yaml}
-	\label{lst:backendPod}
-\end{listing}  
-
-\begin{listing}[H]    
-	\caption{Configuration file for exa-backend service that routes to the exa-backend pod} 
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/exa-backend-service.yaml}
-	\label{lst:backendService}
-\end{listing}  
 
 \section*{RBAC}
 
-\begin{listing}[H]    
-	\caption{Configuration file to define a cluster role that allows reading access to pods}  
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrole_pod-reader.yaml}
-	\label{lst:pod-reader}    
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrole_pod-reader.yaml}
+\captionof{listing}{Configuration file to define a cluster role that allows reading access to pods \label{lst:pod-reader}}
 
-\begin{listing}[H]    
-	\caption{Configuration file to define a cluster role that allows reading and scaling replica sets}  
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrole_rs_admin.yaml}
-	\label{lst:rs-admin}
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrole_rs_admin.yaml}
+\captionof{listing}{Configuration file to define a cluster role that allows reading and scaling replica sets \label{lst:rs-admin}}
+  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrolebinding_pod-reader-exa-backend-sa.yaml}
+\captionof{listing}{Configuration file that binds the cluster role \mycode{pod-reader} defined in Listing \ref{lst:pod-reader} to the service account defined in Listing \ref{lst:exa-backend-sa}}
 
-\begin{listing}[H]    
-	\caption{Configuration file that binds the cluster role \mycode{pod-reader} defined in Listing \ref{lst:pod-reader} to the service account defined in Listing \ref{lst:exa-backend-sa}}  
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrolebinding_pod-reader-exa-backend-sa.yaml}
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrolebinding_rs-admin-exa-backend-sa.yaml}
+\captionof{listing}{Configuration file that binds the cluster role \mycode{rs-admin} defined in Listing \ref{lst:rs-admin} to the service account defined in Listing \ref{lst:exa-backend-sa}}
 
-\begin{listing}[H]    
-	\caption{Configuration file that binds the cluster role \mycode{rs-admin} defined in Listing \ref{lst:rs-admin} to the service account defined in Listing \ref{lst:exa-backend-sa}}
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-backend/clusterrolebinding_rs-admin-exa-backend-sa.yaml}
-\end{listing}  
 
 \section*{Networking}
 
-\begin{listing}[H]    
-	\caption{Configuration file that restricts network communication as explained in Section \ref{ssec:networking}}
-	\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-networkpolicy.yaml}
-\end{listing}  
+\inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-networkpolicy.yaml}
+\captionof{listing}{Configuration file that restricts network communication as explained in Section \ref{ssec:networking}}
+
 
 \section*{Pod Security Policy}
-
 
 \inputminted[autogobble, frame=single, linenos]{yaml}{yaml/exa-psp.yaml}
 \captionof{listing}{Configuration file that enforces a \mycode{PodSecurityPolicy} admission controller as explained in Section \ref{ssec:admissionControl}.\label{lst:podSecurityPolicy}}

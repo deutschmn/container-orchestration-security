@@ -14,9 +14,9 @@ In Kubernetes there are many aspects to consider when looking at it from a secur
 The model is composed of the following four layers:
 
 \begin{enumerate}
-    \item The lowest layer we call \textbf{Base Infrastructure Security} and it concerns all components on which Kubernetes itself builds. These include the Operating System, the container engine (most likely Docker), and the infrastructure of the public or private cloud provider when for example using Google Cloud Platform or Amazon Web Services as an \ac{IaaS} provider. This layer is described in Section~\ref{sec:layer1}.
-    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in Section~\ref{sec:layer2}. It concerns everything related to Kubernetes' control plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting control plane traffic.
-    \item Additionally to the configuration of the Kubernetes control plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in detail in Section~\ref{sec:layer3}.
+    \item The lowest layer we call \textbf{Base Infrastructure Security} and it concerns all components on which Kubernetes itself builds. These include the Operating System, the container engine (most likely Docker), and the infrastructure of the public or private cloud provider when for example using Google Cloud Platform or Amazon Web Services as an \textit{\ac{IaaS}} provider. This layer is described in Section~\ref{sec:layer1}.
+    \item Upon that builds \textbf{Kubernetes Infrastructure Security} which is described in detail in Section~\ref{sec:layer2}. It concerns everything related to Kubernetes' control plane components and their configuration in terms of security. Potential issues there include abuse of the internal Kubernetes APIs, such as the Kubelet API, or intercepting internal traffic between control plane components.
+    \item Additionally to the configuration of the Kubernetes control plane components themselves, there are also security components provided by Kubernetes to secure clusters. These components include Kubernetes' authentication and authorisation mechanisms, pod security policies, secrets management and many more. We group them together in the layer \textbf{Kubernetes Security Controls} as described in Section~\ref{sec:layer3}.
     \item The top-most layer is called \textbf{App and Container Security} and makes use of all layers underneath it. On this layer, the actual applications run in containers, which in turn are located in pods. Exploiting of vulnerabilities in the application code might breach this layer. These topics are described in detail in Section~\ref{sec:layer4}.
 \end{enumerate}
 
@@ -24,7 +24,7 @@ The layered architecture also makes sense when considering damage control aspect
 	
 \section{Base Infrastructure Security} \label{sec:layer1}
 
-The base infrastructure in which a Kubernetes cluster is run sets the foundation for the whole cluster's security, as explained in~\textcite{securingkubernetesBaseInfra}. However well-tuned the Kubernetes cluster configuration is, a breach in the underlying infrastructure of a Kubernetes node can compromise the whole cluster. Depending on whether a cluster runs in a public or private cloud environment, some of the following guidelines may apply. When a cluster runs in a managed environment, such as on Google Kubernetes Engine (GKE) or Amazon Elastic Container Service for Kubernetes (Amazon EKS), a lot of this configuration may already be taken care of by the provider.
+The base infrastructure, in which a Kubernetes cluster is run, sets the foundation for the whole cluster's security, as explained in~\textcite{securingkubernetesBaseInfra}. However well-tuned the Kubernetes cluster configuration is, a breach in the underlying infrastructure of a Kubernetes node can compromise the whole cluster. Depending on whether a cluster runs in a public or private cloud environment, some of the following guidelines may apply. When a cluster runs in a managed environment, such as on Google Kubernetes Engine (GKE) or Amazon Elastic Container Service for Kubernetes (Amazon EKS), a lot of this configuration may already be taken care of by the provider.
 
 \paragraph{Operating System}
 
@@ -72,7 +72,7 @@ A Kubelet is an agent running on every node that is responsible for running its 
 
 This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. In the Kubernetes version 1.15, which is the most current one at the time of this writing, the API is protected by default. The insecure port is closed and the secure ones calls back to the API server to verify whether a request should be allowed (see \textit{Node Authorisation} in Section \ref{ssec:authorisation}). 
 
-It is worth noting that disallowing node network access, as recommended in \ref{sec:layer1}, could have prevented this exploit in the first place.
+It is worth noting that disallowing node network access, as recommended in Section \ref{sec:layer1}, could have prevented this exploit in the first place.
 
 \subsection{etcd}\label{ssec:etcd}
 
@@ -87,7 +87,7 @@ By default, all data in \mycode{etcd} is stored in plain text. As it also stores
 
 \subsection{Kubernetes Dashboard}
 
-The Dashboard\footnote{\url{https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/}, accessed 2019-07-19} is a Web UI for administrating a Kubernetes cluster and gives a convenient overview over the pods, deployments, services and other objects currently deployed. However, as the recent incident at Tesla, described in~\textcite{teslaLeak}, illustrates, leaving the Dashboard exposed to the public internet or leaving it configured insecurely can compromise the security of an entire cluster. Therefore~\textcite{kubernetessecurity} suggest to follow these guidelines to secure it:
+The Dashboard\footnote{\url{https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/}, accessed 2019-07-19} is a Web UI for administrating a Kubernetes cluster and gives a convenient overview over the pods, deployments, services and other objects currently deployed. However, in a recent incident at Tesla, described in~\textcite{teslaLeak}, a cluster was compromised due to an insufficiently secured Dashboard and used for crypto mining. This illustrates how leaving it exposed to the public internet or leaving it configured insecurely can compromise the security of an entire cluster. Therefore~\textcite{kubernetessecurity} suggest to follow these guidelines to secure it:
 
 \begin{itemize}
     \item Only authenticated users should be allowed access.
@@ -97,23 +97,23 @@ The Dashboard\footnote{\url{https://kubernetes.io/docs/tasks/access-application-
 
 \section{Kubernetes Security Controls} \label{sec:layer3}
 
-Kubernetes provides cluster operates with an extensive set of options and tools to tweak the security of a cluster. These build upon the Kubernetes and base infrastructure and are very important to configure correctly. 
+Kubernetes provides cluster operators with an extensive set of options and tools to tweak the security of a cluster. These build upon the Kubernetes and base infrastructure and are very important to configure correctly. 
 
 \subsection{Namespaces} \label{sec:namespaces}
 
-As described in the documentation~\textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/}, accessed 2019-05-31}, almost every resource in a Kubernetes cluster belongs to a namespace. Exceptions include only namespaces themselves and some low-level resources such as nodes. 
+As described in the~\textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/}, accessed 2019-05-31}, almost every resource in a Kubernetes cluster belongs to a namespace. Exceptions include only namespaces themselves and some low-level resources such as nodes. 
 
 All resources belonging to the control plane components reside within the \mycode{kube-system} namespace, while by default all other objects are located in the \mycode{default} namespace. 
 
 Generally, namespaces can be used to avoid naming conflicts, but also to allow for finer grained access control. For example, using API access control, a role can be created so that a user can list all pods from a particular namespace, but not for any other namespace, as further described in Section~\ref{sec:apiAccessControl}. Using this feature makes sense primarily when the cluster is used by a large number of users from, for example, different projects or departments. 
 
-Namespaces can sometimes alleviate the need for creating separate clusters to isolate components from each other. Some use cases might include different namespaces per team, app or environment (such as different namespaces for development, testing and production). 
+Namespaces can sometimes alleviate the need for creating separate clusters to isolate components from each other. Some use cases might include different namespaces per team, application or environment (such as different namespaces for development, testing and production). 
 
 However, as pointed out in~\textcite{namespacesInsights}, while namespaces are suited well for logical partitioning and assigning permission sets on API access level, they do not enforce the partitioning by setting firewall rules or such. Any cluster user or resource can access any other resource in the cluster, even when they are in different namespaces. To achieve partitioning on the network level, see Section~\ref{ssec:networking}.
 
 \subsection{API Access Control} \label{sec:apiAccessControl}
 
-As explained in Chapter \ref{cha:background}, the only component in a Kubernetes cluster that is allowed to modify the cluster state in etcd directly is the API server. Therefore all requests that involve reading or modifying the cluster state must be performed via the Kubernetes API. It is well-documented in~\textcite{k8sdocsApi} and is very powerful, as it is also used by all control plane components to communicate with each other. Hence it needs to be carefully protected from unauthorised access. The API server achieves that using three steps to very if and how a request should be performed, as depicted in Figure~\ref{fig:apiServerAccessControl}.
+As explained in Chapter \ref{cha:background}, the only component in a Kubernetes cluster that is allowed to modify the cluster state in \mycode{etcd} directly is the API server. Therefore all requests that involve reading or modifying the cluster state must be performed via the Kubernetes API. It is well-documented in~\textcite{k8sdocsApi} and is very powerful, as it is also used by all control plane components to communicate with each other. Hence it needs to be carefully protected from unauthorised access. The API server achieves that using three steps to very if and how a request should be performed, as depicted in Figure~\ref{fig:apiServerAccessControl}.
 
 \myfig{api_access_control_itnext.png}{width=0.8\textwidth}{This image from~\textcite{securingkubernetesConfK8SClusterComponents} displays the steps performed by the API server before it persists a request made to it.}{API server access control flow}{fig:apiServerAccessControl}
 
@@ -128,15 +128,15 @@ Service Accounts are managed directly by Kubernetes and give identities to apps 
 For human users, no Kubernetes objects in \mycode{etcd} exist. The administration of those is outsourced to an external entity. The API server offers multiple strategies to authenticate such users, a subset of which are the following:
 
 \begin{itemize}
-    \item The default way of authentication between control plane components is using \textbf{X.509 certificates} within the \ac{PKI} of the cluster. For that to function, the API server is handed the \ac{CA} file using the start-up parameter \mycode{--client-ca-file= /path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided CA. 
+    \item The default way of authentication between control plane components is using \textbf{X.509 certificates} within the \ac{PKI} of the cluster. For that to function, the API server is handed the \ac{CA} file using the start-up parameter \mycode{--client-ca-file= /path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided \ac{CA}.
     
     At the time of this writing, however, Kubernetes does not have support for \ac{CRL} or \ac{OCSP}, with which certificates could be revoked. The issue is currently under debate within the Kubernetes developer community\footnote{\url{https://github.com/kubernetes/kubernetes/issues/18982}, accessed 2019-05-28}. In the meantime, authorisation has to be used to strip users from permissions retroactively.
 
     \item An \textbf{Authentication Proxy} can be used to outsource the task of authentication to an external entity that might run within our outside of the cluster.
     
-    \item In order to enable support for \ac{SSO}, the API server can be configured to use \textbf{\ac{OIDC}}\footnote{\url{https://openid.net/connect/}, accessed 2019-05-28} for authentication. It builds upon the OAuth 2.0 flow and allows the use of external identity providers that implement the standard, such as the well-known \textit{"Sign in with Facebook/Google/Microsoft"} known from various places on the web. 
+    \item In order to enable support for \ac{SSO}, the API server can be configured to use \textbf{\ac{OIDC}}\footnote{\url{https://openid.net/connect/}, accessed 2019-05-28} for authentication. It builds upon the OAuth 2.0 flow and allows the use of external identity providers that implement the standard, such as the common \textit{"Sign in with Facebook/Google/Microsoft"} known from various places on the web. 
 
-   \item For testing and demo purposes it is also possible to use a \textbf{static password file} as per the definition in the RFC 7617 "The 'Basic' HTTP Authentication Scheme" by~\textcite{RFC7617}. However, it is rarely practical in real-world use cases as the password file needs to be manually maintained.
+   \item For testing and demo purposes it is also possible to use a \textbf{static password file} as per the definition in the RFC 7617 "The 'Basic' HTTP Authentication Scheme" by~\textcite{RFC7617}. However, it is rarely practical in real-world use cases as the password file needs to be maintained manually.
 	
 \end{itemize}
 
@@ -148,12 +148,12 @@ As is the case for authentication, Kubernetes also provides several options for 
 
 \begin{itemize}
     \item \textbf{Node Authorisation} is used only by \mycode{kubelet}s, so that nodes are equipped with the minimum set of permissions they need to operate within the cluster.
-    \item \textbf{\ac{ABAC}} grants permissions by explicit policies based on the users' attributes. \ac{ABAC}, however, has been deprecated since Kubernetes version 1.6 and is not recommended to be used anymore.
+    \item \textbf{\ac{ABAC}} grants permissions by explicit policies based on the users' attributes, such as name, location or department. \ac{ABAC}, however, has been deprecated since Kubernetes version 1.6 and is not recommended to be used anymore.
     \item \textbf{\ac{RBAC}} defines roles that come with certain permissions. These roles can then be bound to users to grant them access.
     \item \textbf{Webhook Mode} queries an external REST service to outsource the authorisation to it.
 \end{itemize}
 
-As~\textcite{ABACvsRBAC} point out, conceptually there are advantages and disadvantages to both \ac{ABAC} and \ac{RBAC}. While \ac{ABAC} provides more flexibility, \ac{RBAC} lends itself better for analysis and risk assessment. The main advantage of \ac{ABAC} is that it can perform restrictions based on users' attributes, such as their locations. In the context of Kubernetes, however, its developers~\textcite{ABACvsRBACk8s} argue that only \ac{RBAC} should be used anymore. That is acceptable primarily as the third step of API access control in Kubernetes, \textit{Admission Control}, can provide filters to accommodate for such finer-grained control.
+As~\textcite{ABACvsRBAC} point out, conceptually there are advantages and disadvantages to both \ac{ABAC} and \ac{RBAC}. While \ac{ABAC} provides more flexibility, \ac{RBAC} lends itself better for analysis and risk assessment. The main advantage of \ac{ABAC} is that it can perform restrictions directly based on users' attributes. In the context of Kubernetes, however, its developers~\textcite{ABACvsRBACk8s} argue that only \ac{RBAC} should be used anymore. That is acceptable primarily as the third step of API access control in Kubernetes, \textit{Admission Control}, can provide filters to accommodate for such finer-grained control.
 
 \ac{RBAC} is the recommended way of performing authorisation at the time of this writing, as it is easier to understand and configure than \ac{ABAC} while retaining most of its configuration power. Therefore, we will only consider it in this work and disregard the other options.
 
@@ -173,8 +173,8 @@ A role that allows reading pods is created by applying a YAML file like this:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  namespace: default
   name: pod-reader
+  namespace: default
 rules:
 - apiGroups: [""]
   resources: ["pods"]
@@ -219,7 +219,7 @@ As described in \cite{admissionControl} and \cite{k8sdocs}\footnote{\url{https:/
 
 An especially important admission controller with respect to security is the built-in \mycode{PodSecurityPolicy}. It can be used to forbid containers running with privileged users or set containers' file systems to read-only. Both of these are sensible best practices, as further explained in the context of container security in Section \ref{ssec:exaLayer4}.
 
-Besides standard admission controllers that ship with Kubernetes and should be disabled or altered only under certain circumstances, there is also support for custom controllers that build upon the standard \mycode{Mutating AdmissionWebhook} or \mycode{ValidatingAdmissionWebhook}. These allow for high flexibility as their admission is based on a REST call to a service running within the cluster. This feature can be used to develop custom restrictions, such as this example\footnote{\url{https://github.com/stackrox/admission-controller-webhook-demo}, accessed 2019-05-28} that causes all containers to be run with a non-root user, except they are explicitly marked to do otherwise. 
+Besides standard admission controllers that ship with Kubernetes and should be disabled or altered only under certain circumstances, there is also support for custom controllers that build upon the standard \mycode{MutatingAdmissionWebhook} or \mycode{ValidatingAdmissionWebhook}. These allow for high flexibility as their admission is based on a REST call to a service running within the cluster. This feature can be used to develop custom restrictions, such as this example\footnote{\url{https://github.com/stackrox/admission-controller-webhook-demo}, accessed 2019-05-28} that causes all containers to be run with a non-root user, except they are explicitly marked to do otherwise. 
 
 \subsection{Networking} \label{ssec:networking}
 
@@ -227,11 +227,11 @@ Communication between Kubernetes components and the outside world is a central a
 
 \begin{itemize}
     \item Containers within the same pod communicate with each other via localhost.
-    \item Pods communicate with other pods and with the control plane adhering to the Kubernetes Networking model\footnote{\url{https://kubernetes.io/docs/concepts/cluster-administration/networking/\#the-kubernetes-network-model}, accessed 2019-06-10} that defines an overlay network for that purpose. The model is aimed to be very flexible and should allow for easy porting from virtual machines. It mainly builds upon the premise that pods can be addressed with their own IP addresses, despite multiple pods running on the same node. The network model is not directly implemented in the Kubernetes core, but rather different plugins can be used to meet its requirements. These plugins integrate with nodes and their kernels to establish the layer 3 (network layer) communication as defined in~\textcite{osiModel}.
-    \item Communication with the outside world is handled by Services that can be bound to  Ingress\footnote{\url{https://kubernetes.io/docs/concepts/services-networking/ingress/}, accessed 2019-06-10} objects.
+    \item Pods communicate with other pods and with the control plane adhering to the Kubernetes Networking model\footnote{\url{https://kubernetes.io/docs/concepts/cluster-administration/networking/\#the-kubernetes-network-model}, accessed 2019-06-10} that defines an overlay network for that purpose. The model is aimed to be very flexible and should allow for easy porting from virtual machines. It mainly builds upon the premise that pods can be addressed with their own IP addresses, despite multiple pods running on the same node. The network model is not directly implemented in the Kubernetes core, but rather different plug-ins can be used to meet its requirements. These plug-ins integrate with nodes and their kernels to establish the layer 3 (network layer) communication as defined in~\textcite{osiModel}.
+    \item Communication with the outside world is handled by services that can be bound to  Ingress\footnote{\url{https://kubernetes.io/docs/concepts/services-networking/ingress/}, accessed 2019-06-10} objects.
 \end{itemize}
 
-From a security perspective, an especially important topic in networking are Network Policies\footnote{\url{https://kubernetes.io/docs/concepts/services-networking/network-policies/}, accessed 2019-05-28}, which allow configuration on which pods are allowed to communicate with each other and with other network endpoints. Network policies are realised in the Kubernetes object \mycode{NetworkPolicy}. Still, not all networking plugins support them.
+From a security perspective, an especially important topic in networking are Network Policies\footnote{\url{https://kubernetes.io/docs/concepts/services-networking/network-policies/}, accessed 2019-05-28}, which allow configuration on which pods are allowed to communicate with each other and with other network endpoints. Network policies are realised in the Kubernetes object \mycode{NetworkPolicy}. Still, not all networking plug-ins support them.
 
 An example for a \mycode{NetworkPolicy} could look like this:
 
