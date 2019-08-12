@@ -33,11 +33,7 @@ The setup consists of a backend part, \mycode{exa-backend}, and a frontend part,
 \end{center}
 \end{figure}
 
-% TODO reduce mentions of GKE, don't want it to sound like marketing
-
-The Kubernetes cluster is run in \ac{GKE} on \ac{GCP}\footnote{\url{https://cloud.google.com/kubernetes-engine/}, accessed 2019-07-02}. It is a sensible choice for cluster administrators who are not yet experts in the field of Kubernetes security, as it scales well from a very basic setup up to a large high-availability cluster. 
-
-The architecture of the cluster is depicted in Figure~\ref{fig:exaArchitecture}. The frontend and backend components run in separate pods. Users access the frontend via an ingress that maps to the frontend service. The frontend then retrieves all information by calling the backend service, which in turn makes the request to the Kubernetes API to perform the user's query. We are choosing this setup intentionally so that the frontend does not have direct access to the API to resemble a typical frontend-backend architecture. The following sections describe how we use Kubernetes to enforce these environment restrictions.
+The Kubernetes cluster is run in \ac{GKE} on \ac{GCP}\footnote{\url{https://cloud.google.com/kubernetes-engine/}, accessed 2019-07-02}. The architecture of the cluster is depicted in Figure~\ref{fig:exaArchitecture}. The frontend and backend components run in separate pods. Users access the frontend via an ingress that maps to the frontend service. The frontend then retrieves all information by calling the backend service, which in turn makes the request to the Kubernetes API to perform the user's query. We are choosing this setup intentionally so that the frontend does not have direct access to the API to resemble a typical frontend-backend architecture. The following sections describe how we use Kubernetes to enforce these environment restrictions.
 
 \section{Security Measures}
 
