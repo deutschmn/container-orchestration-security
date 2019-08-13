@@ -41,7 +41,6 @@ In this section, the measures that were taken to secure the setup are explained.
 
 \subsection{Base Infrastructure Security}
 
-% TODO should ref to Google be a footnote or a real citation?
 As this setup uses \ac{GKE} as an infrastructure provider, most considerations for base infrastructure security are already taken care of by Google\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/concepts/security-overview}, accessed 2019-07-09}. By default, \ac{GKE} clusters run the newest version of Google's Container-Optimized OS\footnote{\url{https://cloud.google.com/container-optimized-os/docs/concepts/features-and-benefits}, accessed 2019-07-09} that comes with a current version of the container runtime as well. 
 
 However, as all cluster components are running within the \ac{GCP} environment, they are also subject to Google's Cloud \ac{IAM}\footnote{\url{https://cloud.google.com/iam/}, accessed 2019-07-09}. It works alongside Kubernetes \ac{RBAC}, yet requires some special attention when applications within the Kubernetes cluster access other resources on \ac{GCP} outside of the cluster\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/iam}, accessed 2019-07-09}.
@@ -52,11 +51,11 @@ When it comes to Kubernetes' infrastructure components, most relevant security a
 
 \paragraph{API Server}
 
-The aforementioned \ac{IAM}, by default, allows login using username and password. We disable it in the cluster configuration in the \ac{GCP} web interface and only used certificates, which we regularly rotate\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/credential-rotation}, accessed 2019-07-09}, to authenticate within the cluster.
+The aforementioned \ac{IAM}, by default, allows login using username and password. We disable it in the cluster configuration in the \ac{GCP} web interface and only use certificates, which we regularly rotate\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/credential-rotation}, accessed 2019-07-09}, to authenticate within the cluster.
 
 \paragraph{Secret Encryption}
 
-As explained in Section~\ref{ssec:etcd}, it is vital to encrypt all secrets stored in \mycode{etcd}. \ac{GKE} already provides encryption at rest by default\footnote{\url{https://cloud.google.com/security/encryption-at-rest/default-encryption/}, accessed 2019-07-09}, in case an attacker gains access to an offline copy of the \mycode{etcd} database. However, to protect against the case that an attacker gains online access to the machine that runs \mycode{etcd}, we also configure application-layer encryption. To set it up, we generate a key, store it in Google's Cloud \ac{KMS}\footnote{\url{https://cloud.google.com/kms/docs/}, accessed 2019-07-09} and hand it to the cluster configuration using the command line option \mycode{--database-encryption-key}\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets}, accessed 2019-07-09}.  
+As explained in Section~\ref{ssec:etcd}, it is vital to encrypt all secrets stored in \mycode{etcd}. \ac{GKE} already provides encryption at rest by default\footnote{\url{https://cloud.google.com/security/encryption-at-rest/default-encryption/}, accessed 2019-07-09}, in case an attacker gains access to an offline copy of the \mycode{etcd} database. However, to protect against the case that an attacker gains online access to the node that runs \mycode{etcd}, we also configure application-layer encryption. To set it up, we generate a key, store it in Google's Cloud \ac{KMS}\footnote{\url{https://cloud.google.com/kms/docs/}, accessed 2019-07-09} and hand it to the cluster configuration using the command line option \mycode{--database-encryption-key}\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/encrypting-secrets}, accessed 2019-07-09}.  
 
 \paragraph{Dashboard}
 
@@ -90,7 +89,7 @@ All objects (pods, service accounts, services, etc.) for the example application
 As the example application needs to access the Kubernetes API, access control for it needs to be set up.
 
 \subparagraph{Authentication}
-In our cluster configuration, authentication is done using manually distributed X.509 certificates, as explained in Section~\ref{ssec:authentication}, which is viable as the cluster only has few users. We made this choice not out of any security considerations, so any other means of authentication could be used as well. 
+In our cluster configuration, authentication is done using manually distributed X.509 certificates, as explained in Section~\ref{ssec:authentication}, which is viable as the cluster only has few users that need to access this admin application. We made this choice not out of any security considerations, so any other means of authentication could be used as well. 
 
 The frontend application does not directly access the Kubernetes API and therefore does not need an identity in the cluster. It is consequently set up not to use a service account at all:
 
@@ -197,7 +196,6 @@ In the example application's setup, the pod \mycode{exa-backend-p} never needs t
 
 To do so, we enable network policies in the \ac{GKE} cluster\footnote{\url{https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy}, accessed 2019-07-14} and apply the following policy:
 
-% TODO maybe update this to include a policy that allows only Egress to API server
 \begin{minted}[
     autogobble,
     frame=single,

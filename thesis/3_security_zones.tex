@@ -62,13 +62,13 @@ Even though most installers come with sane default configurations, it is crucial
 
 \subsection{API server}
 
-The API server is an essential control plane component, as an attacker that gains control over it has the equivalent of root access to the whole cluster, as described by~\cite{kubernetessecurity}. The critical aspect of how the API itself is secured and how the API server fulfils its role as the cluster's \ac{CA} is described in Section \ref{sec:apiAccessControl}, as this resembles a Kubernetes security control and is therefore grouped in the corresponding layer of our model. 
+The API server is an essential control plane component, as an attacker that gains control over it has the equivalent of root access to the whole cluster, as described by~\textcite{kubernetessecurity}. The critical aspect of how the API itself is secured and how the API server fulfils its role as the cluster's \ac{CA} is described in Section \ref{sec:apiAccessControl}, as this resembles a Kubernetes security control and is therefore grouped in the corresponding layer of our model. 
 
 Still, any misconfiguration of the API server might mean leaving the front door to the cluster open, which is why its configuration should always be reviewed from a security perspective. This includes the fact that the Kubernetes API should generally not be exposed to the public internet if there is no pressing need.
 
 \subsection{Kubelets}
 
-A Kubelet is an agent running on every node that is responsible for running its containers, reporting metrics and similar. It receives its commands from the control plane. For that, it provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control plane. 
+A \mycode{kubelet} is an agent running on every node that is responsible for running its containers, reporting metrics and similar. It receives its commands from the control plane. For that, it provides the so-called \textit{Kubelet API}, which is undocumented, as it is not supposed to be used by anyone other than the control plane. 
 
 This API needs to be adequately protected, as otherwise it can be misused as shown by~\textcite{kubeletBackdoor}. This misconfiguration gave any attacker with network access to nodes an unauthenticated API backdoor to the cluster. In the Kubernetes version 1.15, which is the most current one at the time of this writing, the API is protected by default. The insecure port is closed and the secure ones calls back to the API server to verify whether a request should be allowed (see \textit{Node Authorisation} in Section \ref{ssec:authorisation}). 
 
@@ -79,7 +79,7 @@ It is worth noting that disallowing node network access, as recommended in Secti
 \mycode{etcd} is the central storage location in Kubernetes that stores all cluster data in a key-value data structure. The API server is the only component that is supposed to access it directly.
 
 \paragraph{Access restriction}
-In order to enforce that only the API server can communicate with \mycode{etcd}, network policies, as later described in Section~\ref{ssec:networking}, should set up and an adequate certificate configuration\footnote{\url{https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/security.md}, accessed 2019-06-11} should be put in place.
+In order to enforce that only the API server can communicate with \mycode{etcd}, network policies, as later described in Section~\ref{ssec:networking}, should be set up and an adequate certificate configuration\footnote{\url{https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/security.md}, accessed 2019-06-11} should be put in place.
 
 \paragraph{Encryption}
 By default, all data in \mycode{etcd} is stored in plain text. As it also stores all secrets, sensitive information might be exposed, if the data on the volume used by \mycode{etcd} leaks. In order to mitigate that, encryption can and should be enabled by providing the API server with an encryption configuration using the startup parameter \mycode{--encryption-provider-config} as described in the \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/}, accessed 2019-06-11}.
@@ -117,7 +117,7 @@ As explained in Chapter \ref{cha:background}, the only component in a Kubernetes
 
 \myfig{api_access_control_itnext.png}{width=0.8\textwidth}{This image from~\textcite{securingkubernetesConfK8SClusterComponents} displays the steps performed by the API server before it persists a request made to it.}{API server access control flow}{fig:apiServerAccessControl}
 
-First, \textbf{Authentication} is performed to determine the identity of the user or system that is trying to access the API. After the identity of the accessing party has been determined, \textbf{Authorisation} is used to decide whether they are allowed to access or modify the requested resource. Finally \textbf{Admission Controllers} are applied to the request to validate or mutate it, before it is ultimately persisted.
+First, \textbf{Authentication} is performed to determine the identity of the user or system that is trying to access the API. After the identity of the accessing party has been determined, \textbf{Authorisation} is used to decide whether they are allowed to access or modify the requested resource. Finally, \textbf{Admission Controllers} are applied to the request to validate or mutate it before it is ultimately persisted.
 
 \subsubsection{Authentication} \label{ssec:authentication}
 
@@ -128,7 +128,7 @@ Service Accounts are managed directly by Kubernetes and give identities to apps 
 For human users, no Kubernetes objects in \mycode{etcd} exist. The administration of those is outsourced to an external entity. The API server offers multiple strategies to authenticate such users, a subset of which are the following:
 
 \begin{itemize}
-    \item The default way of authentication between control plane components is using \textbf{X.509 certificates} within the \ac{PKI} of the cluster. For that to function, the API server is handed the \ac{CA} file using the start-up parameter \mycode{--client-ca-file= /path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided \ac{CA}.
+    \item The default way of authentication between control plane components is using \textbf{X.509 certificates} within the \ac{PKI} of the cluster. For that to function, the API server is handed the \ac{CA} file using the start-up parameter \mycode{--client-ca-file=/path/to/ca.crt}. Users can then authenticate using a certificate signed by the provided \ac{CA}.
     
     At the time of this writing, however, Kubernetes does not have support for \ac{CRL} or \ac{OCSP}, with which certificates could be revoked. The issue is currently under debate within the Kubernetes developer community\footnote{\url{https://github.com/kubernetes/kubernetes/issues/18982}, accessed 2019-05-28}. In the meantime, authorisation has to be used to strip users from permissions retroactively.
 
@@ -215,7 +215,7 @@ Section \ref{ssec:exaLayer3}. shows another practical example of an \ac{RBAC} co
 
 \subsubsection{Admission Control} \label{ssec:admissionControl}
 
-As described in \cite{admissionControl} and \cite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/}, accessed 2019-05-25}, admission control allows for a set of plug-ins to enforce rules about how a cluster is used, by being applied after a request to the API server has passed authentication and authorisation. These plug-ins can be either \textit{mutating}, \textit{validating} or both. First, all mutating admission controllers are executed, then the validating controllers. If any of them rejects the request, the processing is aborted and the request is rejected.
+As described in \textcite{admissionControl} and \textcite{k8sdocs}\footnote{\url{https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/}, accessed 2019-05-25}, admission control allows for a set of plug-ins to enforce rules about how a cluster is used, by being applied after a request to the API server has passed authentication and authorisation. These plug-ins can be either \textit{mutating}, \textit{validating} or both. First, all mutating admission controllers are executed, then the validating controllers. If any of them rejects the request, the processing is aborted and the request is rejected.
 
 An especially important admission controller with respect to security is the built-in \mycode{PodSecurityPolicy}. It can be used to forbid containers running with privileged users or set containers' file systems to read-only. Both of these are sensible best practices, as further explained in the context of container security in Section \ref{ssec:exaLayer4}.
 

@@ -9,9 +9,9 @@ In this chapter, we provide preliminary information on the concepts relevant for
 
 \section{Containers} \label{sec:bkgContainers}
 
-The aim of containerisation is to provide applications with their own isolated runtime environments and simplify deployment processes. Containers package all code and dependencies an application needs to run and can then be independently run in various computing environments. Thereby, containers address many of the use cases previously tackled by \acp{VM}. 
+The aim of containerisation is to provide applications with their own isolated runtime environments and simplify deployment processes. Containers package all code and dependencies an application needs and can then be independently run in various computing environments. Thereby, containers address many of the use cases previously tackled by \acp{VM}. 
 
-The main differences between containers and \acp{VM}, as explained by~\textcite{containersVsVMs} and\textcite{containersVsVMsComparison}, are that when using containers, the guest OS is not virtualised on top of a hypervisor, but rather the containers run directly on the host OS using a container daemon. On the one hand, this means that the guests are not fully isolated anymore, as they are using the same host OS. This, on the other hand, comes with significant performance and resource benefits, which is why containers are widely replacing \acp{VM} in many use cases, as found by~\textcite{redhatOutlook}.
+The main differences between containers and \acp{VM}, as explained by~\textcite{containersVsVMs} and~\textcite{containersVsVMsComparison}, are that when using containers, the guest OS is not virtualised on top of a hypervisor, but rather the containers run directly on the host OS using a container daemon. On the one hand, this means that the guests are not fully isolated anymore, as they are using the same host OS. This, on the other hand, comes with significant performance and resource benefits, which is why containers are widely replacing \acp{VM} in many use cases, as found by~\textcite{redhatOutlook}.
 
 In this thesis, we will be primarily looking at Docker\footnote{\url{https://www.docker.com}, accessed 2019-07-18} as the container engine, yet most principles apply to any container platform.
 
@@ -21,7 +21,7 @@ For containerisation, the application and everything it needs is packaged into a
 
 \begin{figure}[H]
 \begin{center}
-    \includegraphics[width=0.8\linewidth]{figures/k8s_architecture.png}
+    \includegraphics[width=0.9\linewidth]{figures/k8s_architecture.png}
     \caption[Kubernetes Architecture]{This diagram from~\textcite{k8sDiagram} shows the structure of a Kubernetes cluster.}
     \label{fig:k8sArchitecture}
 \end{center}
@@ -36,7 +36,9 @@ The Kubernetes architecture is depicted in Figure \ref{fig:k8sArchitecture}. It 
 
 The master nodes run so-called \textit{control plane components} that are necessary for the cluster to function. These include the \textit{API server} and \mycode{etcd}. The \textit{API server} exposes the \textit{Kubernetes API}\footnote{\url{https://kubernetes.io/docs/concepts/overview/kubernetes-api/}, accessed 2019-07-19}, which is used to control the cluster state. Administrators typically interact with the API using the CLI tool \mycode{kubectl}\footnote{\url{https://kubernetes.io/docs/reference/kubectl/overview/}, accessed 2019-07-19}. The central key-value database \mycode{etcd}\footnote{\url{https://etcd.io}, accessed 2019-07-25} stores all cluster information including all Kubernetes objects and is only supposed to be accessed directly by the API server. The nodes are provided with the necessary information via the API server and \mycode{etcd}.
 
-Worker nodes run the container daemon and the \textit{kubelet}, which is an agent responsible for managing the node. On the workers, the actual containerised applications run. The containers reside within \textit{pods}\footnote{\url{https://kubernetes.io/docs/concepts/workloads/pods/pod/}, accessed 2019-07-19}. A pod runs one or more containers on the same node. Pods are the smallest units that can be scheduled to run. They, like all other Kubernetes objects, are declaratively specified in the \textit{YAML} format\footnote{\url{https://yaml.org}, accessed 2019-07-19}. These specifications include the URL to the container images in the registry, metadata and configuration information. Examples of specification files are given throughout this thesis and in Appendix \hyperref[apx:A]{A}. To create a pod, its specification is submitted to the Kubernetes API. The control plane takes care of the deployment and scheduling of the specified pod. To do so, first, the \textit{Controller manager} determines the demand for pods, then, the \textit{Scheduler} finds a node on which they should run. Finally, the \mycode{kubelet} agent on the node retrieves the configurations from the API server and starts the pod. 
+Worker nodes run the container daemon and the \textit{kubelet}, which is an agent responsible for managing the node. On the workers, the actual containerised applications run. The containers reside within \textit{pods}\footnote{\url{https://kubernetes.io/docs/concepts/workloads/pods/pod/}, accessed 2019-07-19}. A pod runs one or more containers on the same node. Pods are the smallest units that can be scheduled to run. They, like all other Kubernetes objects, are declaratively specified in the \textit{YAML} format\footnote{\url{https://yaml.org}, accessed 2019-07-19}. These specifications include the URL to the container images in the registry, metadata and configuration information. Examples of specification files are given throughout this thesis and in Appendix \hyperref[apx:A]{A}. 
+
+To create a pod, its specification is submitted to the Kubernetes API. The control plane takes care of the deployment and scheduling of the specified pod. To do so, first, the \textit{Controller manager} determines the demand for pods, then, the \textit{Scheduler} finds a node on which they should run. Finally, the \mycode{kubelet} agent on the node retrieves the configurations from the API server and starts the pod. 
 
 \paragraph{Scaling}
 
