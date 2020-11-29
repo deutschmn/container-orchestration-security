@@ -16,4 +16,4 @@ Our research shows that most Kubernetes installers already come with reasonably 
 
 ---
 
-*See full thesis [here](thesis/main.pdf).*
+*See full thesis [here](thesis.pdf).*
